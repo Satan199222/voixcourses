@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 
-export function AccessibilityBar() {
+interface AccessibilityBarProps {
+  onVoiceToggle?: (enabled: boolean) => void;
+}
+
+export function AccessibilityBar({ onVoiceToggle }: AccessibilityBarProps = {}) {
   const [theme, setTheme] = useState("dark");
   const [fontSize, setFontSize] = useState("1.125rem");
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -58,7 +62,10 @@ export function AccessibilityBar() {
         <input
           type="checkbox"
           checked={voiceEnabled}
-          onChange={(e) => setVoiceEnabled(e.target.checked)}
+          onChange={(e) => {
+            setVoiceEnabled(e.target.checked);
+            onVoiceToggle?.(e.target.checked);
+          }}
           className="w-4 h-4 accent-[var(--accent)]"
         />
         <span className="font-semibold text-[var(--text-muted)]">Retour vocal</span>

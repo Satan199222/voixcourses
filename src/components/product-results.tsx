@@ -10,6 +10,7 @@ interface ProductResultsProps {
   }[];
   onConfirm: (ean: string) => void;
   onReject: (query: string) => void;
+  onRemove?: (query: string) => void;
   confirmedEans: Set<string>;
 }
 
@@ -17,6 +18,7 @@ export function ProductResults({
   items,
   onConfirm,
   onReject,
+  onRemove,
   confirmedEans,
 }: ProductResultsProps) {
   if (items.length === 0) return null;
@@ -35,9 +37,20 @@ export function ProductResults({
                 key={item.query}
                 className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--danger)]"
               >
-                <p>
-                  Aucun résultat pour <strong>{item.query}</strong>
-                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p>
+                    Aucun résultat pour <strong>{item.query}</strong>
+                  </p>
+                  {onRemove && (
+                    <button
+                      onClick={() => onRemove(item.query)}
+                      aria-label={`Retirer ${item.query} de la liste`}
+                      className="px-3 py-1 rounded border border-[var(--text-muted)] text-[var(--text-muted)] hover:border-[var(--danger)] hover:text-[var(--danger)] transition-colors text-sm shrink-0"
+                    >
+                      Retirer
+                    </button>
+                  )}
+                </div>
               </li>
             );
           }
@@ -72,7 +85,7 @@ export function ProductResults({
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3 flex-wrap">
                 <button
                   onClick={() => onConfirm(p.ean)}
                   disabled={isConfirmed}
@@ -88,10 +101,19 @@ export function ProductResults({
                 {!isConfirmed && (
                   <button
                     onClick={() => onReject(item.query)}
-                    aria-label={`Refuser ${p.title}`}
+                    aria-label={`Autre choix pour ${p.title}`}
                     className="px-4 py-2 rounded border border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white transition-colors"
                   >
                     Autre choix
+                  </button>
+                )}
+                {onRemove && (
+                  <button
+                    onClick={() => onRemove(item.query)}
+                    aria-label={`Retirer ${p.title} de la liste`}
+                    className="px-4 py-2 rounded border border-[var(--text-muted)] text-[var(--text-muted)] hover:border-[var(--danger)] hover:text-[var(--danger)] transition-colors text-sm"
+                  >
+                    Retirer
                   </button>
                 )}
               </div>
