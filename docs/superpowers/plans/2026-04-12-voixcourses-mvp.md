@@ -4,9 +4,9 @@
 
 **Goal:** Un assistant courses vocal accessible qui transforme une liste en langage naturel en un panier Carrefour rempli, sans authentification.
 
-**Architecture:** Next.js App Router sur Vercel. Les API routes utilisent `@sparticuz/chromium` + `playwright-core` pour appeler l'API interne Carrefour (contournement Cloudflare). Claude Sonnet parse la liste de courses et sélectionne les meilleurs produits. L'UI est 100% accessible (WCAG AAA) avec dictée vocale via Web Speech API.
+**Architecture:** Next.js App Router sur Vercel. Les API routes utilisent `@sparticuz/chromium` + `playwright-core` pour appeler l'API interne Carrefour (contournement Cloudflare). Le Vercel AI SDK (`ai` + AI Gateway) avec `generateText` + `Output.object` parse la liste de courses via Claude Sonnet avec un schéma Zod typé — sortie structurée garantie sans regex. L'UI est 100% accessible (WCAG AAA) avec dictée vocale via Web Speech API.
 
-**Tech Stack:** Next.js 15 (App Router), TypeScript, Tailwind CSS, `@sparticuz/chromium`, `playwright-core`, `@anthropic-ai/sdk`, Web Speech API
+**Tech Stack:** Next.js 15 (App Router), TypeScript, Tailwind CSS, `@sparticuz/chromium`, `playwright-core`, `ai` (Vercel AI SDK) + Vercel AI Gateway, `zod`, Web Speech API
 
 **Référence API Carrefour :** `docs/CARREFOUR-API.md` — tous les endpoints, formats et flow validés.
 
@@ -102,7 +102,7 @@ Note : répondre "no" à Turbopack si demandé. Le `--no-git` évite d'écraser 
 - [ ] **Step 2: Installer les dépendances**
 
 ```bash
-npm install @anthropic-ai/sdk playwright-core @sparticuz/chromium
+npm install ai zod playwright-core @sparticuz/chromium
 ```
 
 - [ ] **Step 3: Configurer next.config.ts pour serverless**
@@ -769,71 +769,79 @@ git add src/app/api/ && git commit -m "feat: add API routes (stores, search, car
 
 ---
 
-### Task 6: Parsing liste de courses + détection ambiguïtés via Claude
+### Task 6: Parsing liste de courses + détection ambiguïtés via AI SDK
 
 **Files:**
-- Create: `src/lib/claude/parse-grocery-list.ts`
+- Create: `src/lib/ai/parse-grocery-list.ts`
 - Create: `src/app/api/parse-list/route.ts`
 
-- [ ] **Step 1: Implémenter le parsing avec détection d'ambiguïtés**
+- [ ] **Step 1: Implémenter le parsing avec Vercel AI SDK + Zod**
 
 ```ts
-// src/lib/claude/parse-grocery-list.ts
-import Anthropic from "@anthropic-ai/sdk";
-import type { ParsedGroceryItem } from "@/lib/carrefour/types";
-
-const client = new Anthropic();
+// src/lib/ai/parse-grocery-list.ts
+import { generateText, Output } from "ai";
+import { z } from "zod";
 
 /**
- * Parse une liste de courses en langage naturel.
- * Détecte les items ambigus (trop vagues) et incompris (erreurs de dictée).
- * Retourne chaque item avec un status: "clear" | "ambiguous" | "unrecognized".
+ * Schéma Zod pour un item de liste de courses parsé par Claude.
+ * Utilisé par Output.object() pour garantir la structure de sortie.
+ */
+const ParsedItemSchema = z.object({
+  query: z.string().describe("Requête de recherche optimisée pour Carrefour (ex: 'lait demi ecreme 1L')"),
+  originalText: z.string().describe("Texte brut de l'utilisateur pour ce produit"),
+  quantity: z.number().default(1).describe("Quantité demandée"),
+  unit: z.string().optional().describe("Unité si précisée (L, kg, g, etc.)"),
+  brand: z.string().optional().describe("Marque si précisée par l'utilisateur"),
+  status: z.enum(["clear", "ambiguous", "unrecognized"]).describe(
+    "clear = prêt pour recherche, ambiguous = trop vague, unrecognized = erreur de dictée"
+  ),
+  clarificationQuestion: z.string().optional().describe(
+    "Question courte en français si le produit est ambigu (ex: 'Quel type de lait ?')"
+  ),
+  suggestions: z.array(z.string()).optional().describe(
+    "2 à 4 suggestions si ambigu ou incompris"
+  ),
+});
+
+const GroceryListSchema = z.object({
+  items: z.array(ParsedItemSchema),
+});
+
+/** Type inféré depuis le schéma Zod — utilisé dans les composants */
+export type ParsedGroceryItem = z.infer<typeof ParsedItemSchema>;
+
+/**
+ * Parse une liste de courses en langage naturel via Claude (Vercel AI Gateway).
+ * Utilise Output.object() pour forcer la sortie structurée — pas de regex.
+ *
+ * Exemples de classification :
+ * - "2 litres de lait demi-écrémé" → status "clear"
+ * - "du lait" → status "ambiguous", suggestions ["demi-écrémé", "entier", "écrémé"]
+ * - "des passes pen" → status "unrecognized", suggestions ["pâtes penne", "pastèques"]
  */
 export async function parseGroceryList(
   rawText: string
 ): Promise<ParsedGroceryItem[]> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2048,
-    messages: [
-      {
-        role: "user",
-        content: `Tu es un assistant qui transforme une liste de courses en français en requêtes de recherche pour Carrefour.
+  const { output } = await generateText({
+    model: "anthropic/claude-sonnet-4.5",
+    output: Output.object({ schema: GroceryListSchema }),
+    prompt: `Tu es un assistant qui transforme une liste de courses en français en requêtes de recherche pour Carrefour.
 
-Pour chaque produit mentionné, retourne un objet JSON avec :
-- "query" : la requête de recherche optimisée pour Carrefour (ex: "lait demi ecreme 1L")
-- "originalText" : le texte brut de l'utilisateur pour ce produit
-- "quantity" : la quantité (nombre, défaut 1)
-- "unit" : l'unité si précisée ("L", "kg", "g", etc.)
-- "brand" : la marque si précisée
-- "status" : l'un de ces 3 statuts :
-  - "clear" : le produit est suffisamment précis pour une recherche
-  - "ambiguous" : le produit est trop vague (ex: "du lait" sans type, "des pâtes" sans forme)
-  - "unrecognized" : le texte semble être une erreur de dictée vocale ou n'est pas un produit alimentaire/ménager
-- "clarificationQuestion" : (si ambigu) une question courte pour l'utilisateur, en français
-- "suggestions" : (si ambigu ou incompris) 2 à 4 suggestions de ce que l'utilisateur voulait peut-être dire
+Analyse chaque produit et classe-le :
+- "clear" : suffisamment précis pour une recherche (ex: "lait demi-écrémé 2L", "pâtes penne Barilla")
+- "ambiguous" : trop vague, il manque une info importante (ex: "du lait" → quel type ?, "des pâtes" → quelle forme ?)
+- "unrecognized" : erreur probable de dictée vocale ou texte incompréhensible
 
-Exemples :
-- "2 litres de lait demi-écrémé" → status "clear", query "lait demi ecreme 2L"
-- "du lait" → status "ambiguous", question "Quel type de lait ?", suggestions ["lait demi-écrémé", "lait entier", "lait écrémé"]
-- "des passes pen" → status "unrecognized", suggestions ["des pâtes penne", "des pastèques"]
-- "3 steaks hachés 5%" → status "clear", query "steak haché 5% MG"
-
-Retourne UNIQUEMENT un tableau JSON, sans texte autour.
+Pour les items "ambiguous", pose une question courte et propose 2-4 suggestions.
+Pour les items "unrecognized", propose 2-4 interprétations possibles.
 
 Liste de courses :
 ${rawText}`,
-      },
-    ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) return [];
-
-  return JSON.parse(jsonMatch[0]);
+  return output?.items ?? [];
 }
+```
 ```
 
 - [ ] **Step 2: Route API**
@@ -841,7 +849,7 @@ ${rawText}`,
 ```ts
 // src/app/api/parse-list/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { parseGroceryList } from "@/lib/claude/parse-grocery-list";
+import { parseGroceryList } from "@/lib/ai/parse-grocery-list";
 
 export async function POST(request: NextRequest) {
   const { text } = await request.json();
@@ -857,7 +865,7 @@ export async function POST(request: NextRequest) {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/lib/claude/ src/app/api/parse-list/ && git commit -m "feat: add Claude grocery list parser"
+git add src/lib/ai/ src/app/api/parse-list/ && git commit -m "feat: add AI SDK grocery list parser with structured output"
 ```
 
 ---
@@ -1849,7 +1857,7 @@ git add src/app/page.tsx && git commit -m "feat: assemble full flow on main page
 - [ ] **Step 1: Créer .env.local**
 
 ```bash
-echo 'ANTHROPIC_API_KEY=your-key-here' > .env.local
+echo 'AI_GATEWAY_API_KEY=your-gateway-key-here' > .env.local
 ```
 
 - [ ] **Step 2: Vérifier .gitignore**
@@ -1891,7 +1899,7 @@ git add -A && git commit -m "feat: VoixCourses MVP complete - voice grocery list
 npx vercel --prod
 ```
 
-Configurer la variable `ANTHROPIC_API_KEY` dans les settings Vercel.
+Configurer l'auth AI Gateway : `vercel env pull` pour OIDC automatique, ou ajouter `AI_GATEWAY_API_KEY` dans les settings Vercel.
 
 ---
 
