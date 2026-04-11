@@ -5,6 +5,35 @@ let page: Page | null = null;
 let cloudflareReady = false;
 
 /**
+ * Détermine le chemin du Chromium à utiliser.
+ * - En production Vercel : @sparticuz/chromium (binaire optimisé Lambda)
+ * - En local : Chromium installé par `npx playwright install chromium`
+ */
+async function getLaunchOptions() {
+  const isVercel = !!process.env.VERCEL;
+
+  if (isVercel) {
+    const chromium = await import("@sparticuz/chromium");
+    return {
+      args: chromium.default.args,
+      executablePath: await chromium.default.executablePath(),
+      headless: true,
+    };
+  }
+
+  // Local dev — chemin du Chromium installé par `npx playwright install`
+  // CHROMIUM_PATH peut override ce chemin (ex: pour un Chromium système)
+  const localChromium =
+    process.env.CHROMIUM_PATH ||
+    "/home/julien/.cache/ms-playwright/chromium-1217/chrome-linux/chrome";
+
+  return {
+    executablePath: localChromium,
+    headless: true,
+  };
+}
+
+/**
  * Retourne une page Playwright prête (Cloudflare passé).
  * Réutilise l'instance entre les appels (Fluid Compute).
  */
@@ -14,16 +43,9 @@ export async function getPage(): Promise<Page> {
   }
 
   if (!browser) {
-    const chromium = await import("@sparticuz/chromium");
     const { chromium: pw } = await import("playwright-core");
-
-    browser = await pw.launch({
-      args: chromium.default.args,
-      executablePath:
-        process.env.CHROMIUM_PATH ||
-        (await chromium.default.executablePath()),
-      headless: true,
-    });
+    const launchOptions = await getLaunchOptions();
+    browser = await pw.launch(launchOptions);
   }
 
   const context = await browser.newContext({

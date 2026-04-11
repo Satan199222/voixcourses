@@ -1,16 +1,46 @@
 @import "tailwindcss";
 
+/* Thème sombre — défaut, contraste AAA (7:1+) */
 :root {
-  --bg: #1a1a2e;
-  --bg-surface: #16213e;
-  --text: #edf2f4;
-  --text-muted: #8d99ae;
+  --bg: #0f0f1a;
+  --bg-surface: #1a1a2e;
+  --text: #f0f0f5;
+  --text-muted: #a0a8b8;
   --accent: #4cc9f0;
   --accent-hover: #7ae0ff;
-  --danger: #ef476f;
-  --success: #06d6a0;
+  --danger: #ff6b8a;
+  --success: #2ee8a5;
   --border: #2b3a55;
-  --focus-ring: #4cc9f0;
+  --focus-ring: #ffd166;
+  --font-size-base: 1.125rem;
+}
+
+/* Thème clair — fond blanc, contraste AAA */
+body.theme-light {
+  --bg: #ffffff;
+  --bg-surface: #f5f5f7;
+  --text: #1a1a2e;
+  --text-muted: #555566;
+  --accent: #0062cc;
+  --accent-hover: #004fa3;
+  --danger: #c41640;
+  --success: #0a7a52;
+  --border: #ccccdd;
+  --focus-ring: #e67700;
+}
+
+/* Thème contraste élevé — noir/jaune (max accessibilité) */
+body.theme-high-contrast {
+  --bg: #000000;
+  --bg-surface: #1a1a1a;
+  --text: #ffffff;
+  --text-muted: #cccccc;
+  --accent: #ffff00;
+  --accent-hover: #ffff66;
+  --danger: #ff4444;
+  --success: #44ff44;
+  --border: #ffffff;
+  --focus-ring: #ffff00;
 }
 
 * {
@@ -18,7 +48,7 @@
 }
 
 html {
-  font-size: 112.5%;
+  font-size: var(--font-size-base);
 }
 
 body {
@@ -26,14 +56,29 @@ body {
   color: var(--text);
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
+  transition: background 0.2s, color 0.2s;
 }
 
+/* Focus visible AAA — 3px ring bien contrasté */
 :focus-visible {
   outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 ::selection {
   background: var(--accent);
   color: var(--bg);
+}
+
+/* sr-only utility (Tailwind v4) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

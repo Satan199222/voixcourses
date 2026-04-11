@@ -11,33 +11,58 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
   const [postalCode, setPostalCode] = useState("");
   const [stores, setStores] = useState<CarrefourStore[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [selectingRef, setSelectingRef] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!postalCode.trim()) return;
     setIsLoading(true);
-    const res = await fetch(`/api/stores?postalCode=${postalCode}`);
-    const data = await res.json();
-    setStores(data.stores || []);
-    setIsLoading(false);
+    setError(null);
+    try {
+      const res = await fetch(`/api/stores?postalCode=${postalCode}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Aucun magasin trouvé pour ce code postal");
+        setStores([]);
+      } else {
+        const data = await res.json();
+        setStores(data.stores || []);
+        if ((data.stores || []).length === 0) {
+          setError("Aucun magasin Carrefour trouvé pour ce code postal");
+        }
+      }
+    } catch {
+      setError("Erreur de connexion");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function handleSelect(store: CarrefourStore) {
-    setSelectedRef(store.ref);
-    const res = await fetch("/api/stores", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ storeRef: store.ref }),
-    });
-    const data = await res.json();
-    onStoreSelected(store, data.basketServiceId);
+    setSelectingRef(store.ref);
+    try {
+      const res = await fetch("/api/stores", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ storeRef: store.ref }),
+      });
+      const data = await res.json();
+      onStoreSelected(store, data.basketServiceId);
+    } catch {
+      setError("Impossible de sélectionner ce magasin");
+      setSelectingRef(null);
+    }
   }
 
   return (
     <section aria-label="Choix du magasin">
-      <h2 className="text-xl font-bold mb-4">Choisir votre magasin</h2>
-      <form onSubmit={handleSearch} className="flex gap-3 mb-4">
+      <h2 className="text-2xl font-bold mb-2">Choisir votre magasin</h2>
+      <p className="text-[var(--text-muted)] mb-4">
+        Entrez votre code postal pour trouver les magasins Carrefour proches.
+      </p>
+
+      <form onSubmit={handleSearch} className="flex gap-3 mb-6">
         <label htmlFor="postal-code" className="sr-only">
           Code postal
         </label>
@@ -50,7 +75,7 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
           onChange={(e) => setPostalCode(e.target.value)}
           placeholder="Code postal (ex: 57360)"
           className="flex-1 p-3 rounded-lg bg-[var(--bg-surface)] border-2 border-[var(--border)] text-[var(--text)] text-lg"
-          aria-describedby="cp-help"
+          autoComplete="postal-code"
         />
         <button
           type="submit"
@@ -60,43 +85,49 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
           {isLoading ? "Recherche..." : "Chercher"}
         </button>
       </form>
-      <p id="cp-help" className="text-sm text-[var(--text-muted)] mb-4">
-        Entrez votre code postal pour trouver les magasins Carrefour proches.
-      </p>
+
+      {error && (
+        <div
+          role="alert"
+          className="p-4 mb-4 rounded-lg border-2 border-[var(--danger)] text-[var(--danger)]"
+        >
+          {error}
+        </div>
+      )}
 
       {stores.length > 0 && (
-        <fieldset>
-          <legend className="font-semibold mb-2">
-            {stores.length} magasin(s) trouvé(s) :
-          </legend>
-          <div className="space-y-2" role="radiogroup">
+        <div>
+          <h3 className="text-lg font-semibold mb-3">
+            {stores.length} magasin{stores.length > 1 ? "s" : ""} trouvé
+            {stores.length > 1 ? "s" : ""} :
+          </h3>
+          <ul role="list" className="space-y-3">
             {stores.map((store) => (
-              <label
-                key={store.ref}
-                className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer border-2 transition-colors ${
-                  selectedRef === store.ref
-                    ? "border-[var(--success)] bg-[var(--bg-surface)]"
-                    : "border-[var(--border)] hover:border-[var(--accent)]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="store"
-                  value={store.ref}
-                  checked={selectedRef === store.ref}
-                  onChange={() => handleSelect(store)}
-                  className="w-5 h-5 accent-[var(--accent)]"
-                />
-                <div>
-                  <div className="font-semibold">{store.name}</div>
-                  <div className="text-sm text-[var(--text-muted)]">
-                    {store.format} — {store.distance} km
+              <li key={store.ref}>
+                <button
+                  type="button"
+                  onClick={() => handleSelect(store)}
+                  disabled={selectingRef !== null}
+                  aria-label={`Choisir ${store.name}, ${store.format}, à ${store.distance} kilomètres`}
+                  className="w-full flex items-center justify-between gap-4 p-4 rounded-lg border-2 border-[var(--border)] bg-[var(--bg-surface)] text-left hover:border-[var(--accent)] disabled:opacity-50 transition-colors"
+                >
+                  <div>
+                    <div className="font-semibold text-lg">{store.name}</div>
+                    <div className="text-sm text-[var(--text-muted)]">
+                      {store.format} — {store.distance} km
+                    </div>
                   </div>
-                </div>
-              </label>
+                  <span
+                    className="px-4 py-2 rounded bg-[var(--accent)] text-[var(--bg)] font-bold"
+                    aria-hidden="true"
+                  >
+                    {selectingRef === store.ref ? "..." : "Choisir"}
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
-        </fieldset>
+          </ul>
+        </div>
       )}
     </section>
   );

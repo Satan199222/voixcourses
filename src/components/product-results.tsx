@@ -57,10 +57,23 @@ export function ProductResults({
 
           const isConfirmed = confirmedEans.has(p.ean);
 
+          // aria-label complet pour la voix sur focus :
+          // "Lait Demi-Écrémé Lactel, marque Lactel, 1 euro 26, Nutriscore A, confirmé"
+          const priceText = p.price != null
+            ? `${Math.floor(p.price)} euro${Math.floor(p.price) > 1 ? "s" : ""}${
+                p.price % 1 !== 0 ? ` ${Math.round((p.price % 1) * 100)}` : ""
+              }`
+            : "prix indisponible";
+          const nutriText = p.nutriscore ? `, Nutriscore ${p.nutriscore}` : "";
+          const stateText = isConfirmed ? ", confirmé" : "";
+          const cardLabel = `${p.title}, ${p.packaging || ""}, ${priceText}${nutriText}${stateText}`;
+
           return (
             <li
               key={p.ean}
-              className={`p-4 rounded-lg bg-[var(--bg-surface)] border-2 transition-colors ${
+              tabIndex={0}
+              aria-label={cardLabel}
+              className={`p-4 rounded-lg bg-[var(--bg-surface)] border-2 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] ${
                 isConfirmed
                   ? "border-[var(--success)]"
                   : "border-[var(--border)]"
@@ -75,11 +88,17 @@ export function ProductResults({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-[var(--accent)]">
+                  <p
+                    className="text-2xl font-bold text-[var(--accent)]"
+                    aria-hidden="true"
+                  >
                     {p.price?.toFixed(2)}€
                   </p>
                   {p.perUnitLabel && (
-                    <p className="text-sm text-[var(--text-muted)]">
+                    <p
+                      className="text-sm text-[var(--text-muted)]"
+                      aria-hidden="true"
+                    >
                       {p.perUnitLabel}
                     </p>
                   )}

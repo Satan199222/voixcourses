@@ -12,10 +12,15 @@ export function AccessibilityBar({ onVoiceToggle }: AccessibilityBarProps = {}) 
   const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   useEffect(() => {
-    document.body.className = theme === "dark" ? "" : `theme-${theme}`;
+    // Retirer les anciennes classes de thème, garder les autres
+    document.body.classList.remove("theme-light", "theme-high-contrast");
+    if (theme !== "dark") {
+      document.body.classList.add(`theme-${theme}`);
+    }
   }, [theme]);
 
   useEffect(() => {
+    // La variable CSS --font-size-base est sur :root (html), pas body
     document.documentElement.style.setProperty("--font-size-base", fontSize);
   }, [fontSize]);
 

@@ -9,6 +9,7 @@ import { ListClarification } from "@/components/list-clarification";
 import { ProductResults } from "@/components/product-results";
 import { CartSummary } from "@/components/cart-summary";
 import { useSpeech } from "@/lib/speech/use-speech";
+import { useFocusAnnounce } from "@/lib/speech/use-focus-announce";
 import type {
   CarrefourProduct,
   Cart,
@@ -54,6 +55,9 @@ export default function Home() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const { transcript, isListening, startListening, stopListening, speak, isSupported } =
     useSpeech();
+
+  // Voix qui suit le focus clavier (opt-in via la barre d'accessibilité)
+  useFocusAnnounce(voiceEnabled);
 
   // ── Focus management ───────────────────────────────────────────────────────
   const mainRef = useRef<HTMLDivElement>(null);
