@@ -3,3 +3,5 @@ node_modules/
 probes/results/
 probes/scratch/
 .env.local
+.next/
+.vercel/

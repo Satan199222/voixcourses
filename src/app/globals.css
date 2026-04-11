@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #1a1a2e;
+  --bg-surface: #16213e;
+  --text: #edf2f4;
+  --text-muted: #8d99ae;
+  --accent: #4cc9f0;
+  --accent-hover: #7ae0ff;
+  --danger: #ef476f;
+  --success: #06d6a0;
+  --border: #2b3a55;
+  --focus-ring: #4cc9f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 112.5%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
