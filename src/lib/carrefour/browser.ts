@@ -5,6 +5,34 @@ let page: Page | null = null;
 let cloudflareReady = false;
 
 /**
+ * Charge un navigateur Playwright avec le plugin stealth activé.
+ *
+ * Stealth masque les traces automation-specific que Cloudflare renifle pour
+ * bloquer les bots : `navigator.webdriver=true`, `chrome.runtime` absent en
+ * headless, plugins vides, permissions API inattendues, etc. Indispensable
+ * sur IP datacenter (Vercel) où Cloudflare est en mode challenge strict.
+ *
+ * `playwright-extra` et `puppeteer-extra-plugin-stealth` sont loadés
+ * dynamiquement pour que le bundle ne charge pas ces deps sur les routes
+ * qui n'utilisent pas Carrefour.
+ */
+async function getChromium() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playwrightExtra: any = await import("playwright-extra");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stealthMod: any = await import("puppeteer-extra-plugin-stealth");
+  const stealth = stealthMod.default();
+  // Désactiver les evasions qui posent problème en environnement serverless
+  // (iframe.contentWindow se comporte bizarrement dans chromium headless).
+  if (stealth.enabledEvasions instanceof Set) {
+    stealth.enabledEvasions.delete("iframe.contentWindow");
+  }
+  const chromium = playwrightExtra.chromium ?? playwrightExtra.default.chromium;
+  chromium.use(stealth);
+  return chromium;
+}
+
+/**
  * URL du pack Brotli de Chromium hébergé sur GitHub Releases.
  *
  * @sparticuz/chromium-min NE bundle PAS le binaire (différence avec
@@ -71,12 +99,14 @@ export async function getPage(): Promise<Page> {
   }
 
   if (!browser) {
-    const { chromium: pw } = await import("playwright-core");
+    const pw = await getChromium();
     const launchOptions = await getLaunchOptions();
-    browser = await pw.launch(launchOptions);
+    browser = (await pw.launch(launchOptions)) as Browser;
   }
 
-  const context = await browser.newContext({
+  // Narrow : browser vient d'être assigné, TS l'a oublié avec l'async.
+  const activeBrowser = browser as Browser;
+  const context = await activeBrowser.newContext({
     // User agent récent Chrome Linux — plus crédible que la valeur par défaut
     // de headless-chromium. Cloudflare note cette valeur dans son fingerprint.
     userAgent:
