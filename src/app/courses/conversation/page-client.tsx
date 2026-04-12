@@ -395,6 +395,7 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
       last_order_days_ago: history.lastEntry
         ? String(
             Math.round(
+              // eslint-disable-next-line react-hooks/purity -- Date.now() dans useMemo, recalculé aux changements de lastEntry, précision "jours" suffisante pour l'agent
               (Date.now() - new Date(history.lastEntry.at).getTime()) /
                 (24 * 60 * 60 * 1000)
             )

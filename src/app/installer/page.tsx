@@ -22,6 +22,7 @@ export default function InstallerPage() {
   const [browser, setBrowser] = useState<BrowserInfo | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- detectBrowser lit navigator.*, indisponible en SSR
     setBrowser(detectBrowser());
   }, []);
 

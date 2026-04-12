@@ -72,7 +72,6 @@ export function useSpeech(options: UseSpeechOptions = {}): UseSpeechReturn {
     setTranscript("");
     playBeep("start");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognitionCtor =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
