@@ -57,28 +57,26 @@ export function ProductResults({
 
           const isConfirmed = confirmedEans.has(p.ean);
 
-          // aria-label complet pour la voix sur focus :
-          // "Lait Demi-Écrémé Lactel, marque Lactel, 1 euro 26, Nutriscore A, confirmé"
-          const priceText = p.price != null
-            ? `${Math.floor(p.price)} euro${Math.floor(p.price) > 1 ? "s" : ""}${
-                p.price % 1 !== 0 ? ` ${Math.round((p.price % 1) * 100)}` : ""
-              }`
+          // Description vocale complète du produit pour les aria-labels des boutons.
+          // Chaque bouton inclut le nom + prix + état pour que le screen reader
+          // annonce l'info produit ET l'action sur chaque focus.
+          // Pattern recommandé : pas de tabIndex sur la carte, infos dans les boutons.
+          const priceVocal = p.price != null
+            ? p.price.toFixed(2).replace(".", " euro ").replace(",", " euro ")
             : "prix indisponible";
-          const nutriText = p.nutriscore ? `, Nutriscore ${p.nutriscore}` : "";
-          const stateText = isConfirmed ? ", confirmé" : "";
-          const cardLabel = `${p.title}, ${p.packaging || ""}, ${priceText}${nutriText}${stateText}`;
+          const nutriVocal = p.nutriscore ? `, Nutriscore ${p.nutriscore}` : "";
+          const productDesc = `${p.title}, ${p.packaging || ""}, ${priceVocal}${nutriVocal}`;
 
           return (
             <li
               key={p.ean}
-              tabIndex={0}
-              aria-label={cardLabel}
-              className={`p-4 rounded-lg bg-[var(--bg-surface)] border-2 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] ${
+              className={`p-4 rounded-lg bg-[var(--bg-surface)] border-2 transition-colors ${
                 isConfirmed
                   ? "border-[var(--success)]"
                   : "border-[var(--border)]"
               }`}
             >
+              {/* Contenu visuel — pas focusable, le screen reader le lit en mode browse */}
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{p.title}</h3>
@@ -88,27 +86,27 @@ export function ProductResults({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p
-                    className="text-2xl font-bold text-[var(--accent)]"
-                    aria-hidden="true"
-                  >
+                  <p className="text-2xl font-bold text-[var(--accent)]">
                     {p.price?.toFixed(2)}€
                   </p>
                   {p.perUnitLabel && (
-                    <p
-                      className="text-sm text-[var(--text-muted)]"
-                      aria-hidden="true"
-                    >
+                    <p className="text-sm text-[var(--text-muted)]">
                       {p.perUnitLabel}
                     </p>
                   )}
                 </div>
               </div>
+
+              {/* Boutons d'action — chaque bouton porte la description complète du produit */}
               <div className="flex gap-2 mt-3 flex-wrap">
                 <button
                   onClick={() => onConfirm(p.ean)}
                   disabled={isConfirmed}
-                  aria-label={`${isConfirmed ? "Confirmé" : "Confirmer"} ${p.title}`}
+                  aria-label={
+                    isConfirmed
+                      ? `${productDesc}. Déjà confirmé.`
+                      : `Confirmer : ${productDesc}`
+                  }
                   className={`px-4 py-2 rounded font-semibold transition-colors ${
                     isConfirmed
                       ? "bg-[var(--success)] text-[var(--bg)]"
@@ -120,7 +118,7 @@ export function ProductResults({
                 {!isConfirmed && (
                   <button
                     onClick={() => onReject(item.query)}
-                    aria-label={`Autre choix pour ${p.title}`}
+                    aria-label={`Voir un autre choix pour ${item.query}. Actuel : ${productDesc}`}
                     className="px-4 py-2 rounded border border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white transition-colors"
                   >
                     Autre choix
@@ -129,7 +127,7 @@ export function ProductResults({
                 {onRemove && (
                   <button
                     onClick={() => onRemove(item.query)}
-                    aria-label={`Retirer ${p.title} de la liste`}
+                    aria-label={`Retirer ${productDesc} de ma liste`}
                     className="px-4 py-2 rounded border border-[var(--text-muted)] text-[var(--text-muted)] hover:border-[var(--danger)] hover:text-[var(--danger)] transition-colors text-sm"
                   >
                     Retirer

@@ -70,6 +70,61 @@ body {
   color: var(--bg);
 }
 
+/* Respecter la préférence système si l'utilisateur n'a pas explicitement choisi
+   un thème. Le thème par défaut est sombre, mais on bascule en clair si
+   l'utilisateur a configuré son système en clair. */
+@media (prefers-color-scheme: light) {
+  body:not(.theme-light):not(.theme-high-contrast):not(.theme-dark) {
+    --bg: #ffffff;
+    --bg-surface: #f5f5f7;
+    --text: #1a1a2e;
+    --text-muted: #555566;
+    --accent: #0062cc;
+    --accent-hover: #004fa3;
+    --danger: #c41640;
+    --success: #0a7a52;
+    --border: #ccccdd;
+    --focus-ring: #e67700;
+  }
+}
+
+/* Windows High Contrast Mode — utiliser les system colors plutôt que les nôtres.
+   Ne pas redesigner, juste ajuster ce qui ne fonctionnerait pas. */
+@media (forced-colors: active) {
+  :root {
+    --bg: Canvas;
+    --bg-surface: Canvas;
+    --text: CanvasText;
+    --text-muted: CanvasText;
+    --accent: LinkText;
+    --accent-hover: LinkText;
+    --border: CanvasText;
+    --focus-ring: Highlight;
+    --danger: Mark;
+    --success: LinkText;
+  }
+
+  /* Forcer les bordures sur les éléments avec background coloré qui disparaissent
+     en forced-colors (le background est ignoré, on doit garantir la visibilité) */
+  button,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    border: 2px solid ButtonBorder !important;
+  }
+}
+
+/* Respecter prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* sr-only utility (Tailwind v4) */
 .sr-only {
   position: absolute;

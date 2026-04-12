@@ -25,16 +25,47 @@ export function useFocusAnnounce(enabled: boolean) {
     let lastAnnouncement = "";
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
+    /**
+     * Améliorer la prononciation française :
+     * - "1.26€" → "1 euros 26 centimes"
+     * - "1L" → "1 litre"
+     * - "500g" → "500 grammes"
+     */
+    function preparePronunciation(text: string): string {
+      return text
+        // Prix : 1.26€ ou 1,26€ → "1 euros 26 centimes"
+        .replace(/(\d+)[.,](\d{2})\s*€/g, "$1 euros $2 centimes")
+        // Prix entier : 5€ → "5 euros"
+        .replace(/(\d+)\s*€/g, "$1 euros")
+        // Litres
+        .replace(/(\d+(?:[.,]\d+)?)\s*L\b/g, "$1 litres")
+        // Kilogrammes
+        .replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi, "$1 kilogrammes")
+        // Grammes
+        .replace(/(\d+(?:[.,]\d+)?)\s*g\b/g, "$1 grammes")
+        // Centilitres
+        .replace(/(\d+)\s*cl\b/g, "$1 centilitres")
+        // Millilitres
+        .replace(/(\d+)\s*ml\b/g, "$1 millilitres");
+    }
+
     function announce(text: string) {
-      if (!text.trim() || text === lastAnnouncement) return;
+      const cleaned = preparePronunciation(text.trim());
+      if (!cleaned || cleaned === lastAnnouncement) return;
       if (!window.speechSynthesis) return;
 
-      lastAnnouncement = text;
+      lastAnnouncement = cleaned;
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(cleaned);
       utterance.lang = "fr-FR";
       utterance.rate = 1.1;
+
+      // Préférer une voix française si disponible
+      const voices = window.speechSynthesis.getVoices();
+      const frenchVoice = voices.find((v) => v.lang.startsWith("fr"));
+      if (frenchVoice) utterance.voice = frenchVoice;
+
       window.speechSynthesis.speak(utterance);
     }
 
