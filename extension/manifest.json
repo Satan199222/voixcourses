@@ -3,7 +3,6 @@
   "name": "VoixCourses",
   "version": "0.1.0",
   "description": "Assistant de courses accessible — transfère votre liste VoixCourses dans votre panier Carrefour.",
-  "default_locale": "fr",
 
   "permissions": ["storage", "tabs"],
 
