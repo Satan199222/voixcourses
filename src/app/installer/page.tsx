@@ -43,39 +43,11 @@ export default function InstallerPage() {
         </p>
       </header>
 
-      {/* Statut — aria-live pour que l'utilisateur entende la détection */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={`p-4 rounded-lg border-2 ${
-          extension.installed
-            ? "border-[var(--success)] bg-[var(--bg-surface)]"
-            : "border-[var(--border)] bg-[var(--bg-surface)]"
-        }`}
-      >
-        {extension.installed ? (
-          <>
-            <strong className="text-[var(--success)]">
-              ✓ Extension détectée (version {extension.version})
-            </strong>
-            <p className="text-sm mt-1">
-              Vous pouvez retourner sur{" "}
-              <Link href="/" className="underline text-[var(--accent)]">
-                VoixCourses
-              </Link>{" "}
-              et envoyer votre liste en 1 clic.
-            </p>
-          </>
-        ) : (
-          <>
-            <strong>Extension non détectée</strong>
-            <p className="text-sm text-[var(--text-muted)] mt-1">
-              Suivez la procédure ci-dessous. La page se met à jour
-              automatiquement dès que l&apos;extension est installée.
-            </p>
-          </>
-        )}
-      </div>
+      {/* Statut — aria-live pour que l'utilisateur entende la détection.
+          Bouton "Tester" pour vérifier activement que l'extension répond
+          (utile si l'auto-détection n'a pas déclenché à temps au 1er load). */}
+      <ExtensionStatus extension={extension} />
+
 
       {browser && !browser.canInstallExtension ? (
         <UnsupportedBrowserNotice browser={browser} />
@@ -87,6 +59,146 @@ export default function InstallerPage() {
           <AccessibilitySection />
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Carte de statut extension avec bouton "Tester". Le ping envoie un message
+ * PING à l'extension via externally_connectable et attend la réponse. Cela
+ * confirme que :
+ * 1. L'extension est installée
+ * 2. Les matches externally_connectable couvrent bien notre domaine
+ * 3. Le background worker de l'extension répond correctement
+ *
+ * Plus robuste que la simple détection de marqueur DOM.
+ */
+function ExtensionStatus({
+  extension,
+}: {
+  extension: ReturnType<typeof useExtension>;
+}) {
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<
+    | null
+    | { ok: true; version: string }
+    | { ok: false; reason: string }
+  >(null);
+
+  async function testPing() {
+    if (!extension.extensionId) {
+      setTestResult({
+        ok: false,
+        reason:
+          "Aucun identifiant d'extension détecté. Rechargez la page après avoir installé.",
+      });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await new Promise<{
+        installed?: boolean;
+        version?: string;
+        error?: string;
+      }>((resolve) => {
+        // @ts-expect-error chrome global
+        if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+          resolve({ error: "API chrome.runtime indisponible dans ce navigateur" });
+          return;
+        }
+        // @ts-expect-error chrome global
+        chrome.runtime.sendMessage(
+          extension.extensionId,
+          { type: "PING" },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (response: any) => {
+            // @ts-expect-error chrome.runtime.lastError
+            const err = chrome.runtime.lastError;
+            if (err) resolve({ error: err.message });
+            else resolve(response || {});
+          }
+        );
+      });
+
+      if (res.installed && res.version) {
+        setTestResult({ ok: true, version: res.version });
+      } else {
+        setTestResult({
+          ok: false,
+          reason: res.error || "L'extension n'a pas répondu au PING.",
+        });
+      }
+    } catch (err) {
+      setTestResult({
+        ok: false,
+        reason: err instanceof Error ? err.message : "Erreur inconnue",
+      });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={`p-4 rounded-lg border-2 bg-[var(--bg-surface)] ${
+        extension.installed
+          ? "border-[var(--success)]"
+          : "border-[var(--border)]"
+      }`}
+    >
+      {extension.installed ? (
+        <>
+          <strong className="text-[var(--success)]">
+            ✓ Extension détectée (version {extension.version})
+          </strong>
+          <p className="text-sm mt-1">
+            Vous pouvez retourner sur{" "}
+            <Link href="/" className="underline text-[var(--accent)]">
+              VoixCourses
+            </Link>{" "}
+            et envoyer votre liste en 1 clic.
+          </p>
+        </>
+      ) : (
+        <>
+          <strong>Extension non détectée</strong>
+          <p className="text-sm text-[var(--text-muted)] mt-1">
+            Suivez la procédure ci-dessous. La page se met à jour
+            automatiquement dès que l&apos;extension est installée, ou
+            cliquez sur « Tester » ci-dessous.
+          </p>
+        </>
+      )}
+
+      <div className="mt-3 flex items-center gap-3 flex-wrap">
+        <button
+          type="button"
+          onClick={testPing}
+          disabled={testing}
+          aria-label="Tester la communication avec l'extension"
+          className="px-4 py-2 rounded-lg border-2 border-[var(--accent)] text-[var(--accent)] font-semibold text-sm hover:bg-[var(--accent)] hover:text-[var(--bg)] disabled:opacity-50 transition-colors"
+        >
+          {testing ? "Test en cours..." : "Tester la communication"}
+        </button>
+        {testResult && (
+          <span
+            role="status"
+            aria-live="polite"
+            className={`text-sm ${
+              testResult.ok
+                ? "text-[var(--success)]"
+                : "text-[var(--danger)]"
+            }`}
+          >
+            {testResult.ok
+              ? `✓ L'extension répond (version ${testResult.version})`
+              : `✗ ${testResult.reason}`}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -120,8 +232,8 @@ function WhyInstallSection() {
       <ul className="space-y-2 text-base list-disc list-inside text-[var(--text-muted)]">
         <li>
           <strong className="text-[var(--text)]">1 clic</strong> pour transférer
-          votre liste dans votre panier Carrefour — au lieu d&apos;un bookmarklet
-          difficile à configurer au clavier.
+          votre liste dans votre panier Carrefour, directement dans votre
+          session navigateur.
         </li>
         <li>
           <strong className="text-[var(--text)]">Voix active</strong> aussi sur
