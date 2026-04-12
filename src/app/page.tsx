@@ -7,7 +7,7 @@ import { StoreSelector } from "@/components/store-selector";
 import { GroceryInput } from "@/components/grocery-input";
 import { ListClarification } from "@/components/list-clarification";
 import { ProductResults } from "@/components/product-results";
-import { CartSummary } from "@/components/cart-summary";
+import { CartHandoff } from "@/components/cart-handoff";
 import { useSpeech } from "@/lib/speech/use-speech";
 import { useFocusAnnounce } from "@/lib/speech/use-focus-announce";
 import type {
@@ -285,54 +285,44 @@ export default function Home() {
     }
   }
 
-  // ── Add confirmed products to cart ────────────────────────────────────────
-  async function handleAddToCart() {
+  // ── Préparer le panier pour le transfert vers la session utilisateur ──────
+  // On n'appelle PLUS PATCH /api/cart côté serveur — c'est le bookmarklet
+  // qui le fera dans la session de l'utilisateur. On construit juste un
+  // objet Cart à partir des produits confirmés pour l'affichage.
+  function handlePrepareCart() {
     if (!basketServiceId) {
       announce("Erreur : aucun magasin sélectionné.");
       return;
     }
 
-    setIsLoading(true);
-    announce("Ajout des produits au panier...");
-
     const confirmedProducts = matchedItems
       .filter((m) => m.product && confirmedEans.has(m.product.ean))
       .map((m) => m.product!);
 
-    try {
-      let lastCart: Cart | null = null;
-      for (const product of confirmedProducts) {
-        const res = await fetch("/api/cart", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            ean: product.ean,
-            basketServiceId,
-            quantity: 1,
-          }),
-        });
-        lastCart = await res.json();
-      }
+    const totalAmount = confirmedProducts.reduce(
+      (sum, p) => sum + (p.price ?? 0),
+      0
+    );
 
-      setCart(lastCart);
-      setStep("cart");
-      setIsLoading(false);
+    const virtualCart: Cart = {
+      totalAmount,
+      totalFees: 0,
+      items: confirmedProducts.map((p) => ({
+        ean: p.ean,
+        title: p.title,
+        brand: p.brand,
+        quantity: 1,
+        price: p.price ?? 0,
+        available: p.purchasable,
+      })),
+    };
 
-      if (lastCart) {
-        announce(
-          `Panier rempli. ${lastCart.items.length} produit(s) pour ${lastCart.totalAmount.toFixed(2)} euros. Vous pouvez valider et payer sur Carrefour.`
-        );
-      }
-    } catch {
-      announce("Une erreur est survenue lors de l'ajout au panier.");
-      setIsLoading(false);
-    }
-  }
+    setCart(virtualCart);
+    setStep("cart");
 
-  // ── Checkout ───────────────────────────────────────────────────────────────
-  function handleCheckout() {
-    window.open("https://www.carrefour.fr/mon-panier", "_blank");
-    announce("Redirection vers Carrefour pour le paiement.");
+    announce(
+      `Liste prête. ${confirmedProducts.length} produit(s) pour ${totalAmount.toFixed(2).replace(".", " euros ")}. Copiez le lien magique et collez-le sur carrefour.fr pour remplir votre panier.`
+    );
   }
 
   // ── Reset ──────────────────────────────────────────────────────────────────
@@ -459,9 +449,11 @@ export default function Home() {
               </button>
             </form>
 
-            {/* Add to cart button — visible once all found products are confirmed */}
+            {/* Valider la liste — visible once all found products are confirmed.
+                On N'appelle PLUS l'API cart côté serveur : c'est le bookmarklet
+                qui le fera dans la session du user. Ici on prépare juste
+                la liste pour l'affichage de l'écran final. */}
             {allConfirmed && (() => {
-              // Calculer le total estimé pour l'annonce vocale
               const confirmedProducts = matchedItems
                 .filter((m) => m.product && confirmedEans.has(m.product.ean))
                 .map((m) => m.product!);
@@ -470,36 +462,31 @@ export default function Home() {
                 0
               );
               const count = confirmedProducts.length;
-              const totalText = totalEstimated.toFixed(2).replace(".", " euros ");
+              const totalText = totalEstimated
+                .toFixed(2)
+                .replace(".", " euros ");
 
               return (
                 <button
                   id="add-to-cart-button"
-                  onClick={handleAddToCart}
-                  disabled={isLoading}
-                  aria-label={
-                    isLoading
-                      ? "Ajout en cours au panier Carrefour"
-                      : `Ajouter au panier Carrefour : ${count} produit${count > 1 ? "s" : ""}, total estimé ${totalText}`
-                  }
-                  className="w-full px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors"
+                  onClick={handlePrepareCart}
+                  aria-label={`Valider ma liste : ${count} produit${count > 1 ? "s" : ""}, total estimé ${totalText}`}
+                  className="w-full px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
-                  {isLoading
-                    ? "Ajout en cours..."
-                    : `Ajouter tout au panier Carrefour (${count} produit${count > 1 ? "s" : ""}, ${totalEstimated.toFixed(2)}€)`}
+                  {`Valider ma liste (${count} produit${count > 1 ? "s" : ""}, ${totalEstimated.toFixed(2)}€)`}
                 </button>
               );
             })()}
           </>
         )}
 
-        {/* Phase 4 — Cart */}
-        {step === "cart" && (
-          <CartSummary
+        {/* Phase 4 — Remise du panier à l'utilisateur via bookmarklet */}
+        {step === "cart" && storeRef && basketServiceId && (
+          <CartHandoff
             cart={cart}
             slot={slot}
-            onCheckout={handleCheckout}
-            isLoading={isLoading}
+            storeRef={storeRef}
+            basketServiceId={basketServiceId}
           />
         )}
 
