@@ -190,14 +190,20 @@ body {
   }
 }
 
-/* -- Typographie de base (échelle stricte) ------------------ */
-.vc-h1 { font-size: 64px; line-height: 1.02; letter-spacing: -2px; font-weight: 700; }
-.vc-h2 { font-size: 40px; line-height: 1.1; letter-spacing: -1.2px; font-weight: 700; }
-.vc-h3 { font-size: 22px; line-height: 1.25; letter-spacing: -0.2px; font-weight: 700; }
-.vc-body { font-size: 18px; line-height: 1.65; }
-.vc-meta { font-size: 15px; line-height: 1.55; }
+/* -- Typographie de base (échelle en rem — suit --font-size-base) ---
+   Base de référence : 18px.
+   En rem : 64/18 = 3.556, 40/18 = 2.222, 22/18 = 1.222, 15/18 = 0.833,
+            13/18 = 0.722.
+   Quand l'utilisateur passe à 22px, tous ces éléments grossissent
+   proportionnellement car html { font-size: var(--font-size-base) }.
+   ------------------------------------------------------------------ */
+.vc-h1 { font-size: 3.556rem; line-height: 1.02; letter-spacing: -0.11rem; font-weight: 700; }
+.vc-h2 { font-size: 2.222rem; line-height: 1.1;  letter-spacing: -0.067rem; font-weight: 700; }
+.vc-h3 { font-size: 1.222rem; line-height: 1.25; letter-spacing: -0.011rem; font-weight: 700; }
+.vc-body { font-size: 1rem; line-height: 1.65; }
+.vc-meta { font-size: 0.833rem; line-height: 1.55; }
 .vc-micro {
-  font-size: 13px;
+  font-size: 0.722rem;
   line-height: 1.5;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -205,14 +211,14 @@ body {
 }
 
 @media (max-width: 768px) {
-  .vc-h1 { font-size: 44px; letter-spacing: -1.2px; }
-  .vc-h2 { font-size: 30px; letter-spacing: -0.8px; }
-  .vc-h3 { font-size: 20px; }
+  .vc-h1 { font-size: 2.444rem; letter-spacing: -0.067rem; }
+  .vc-h2 { font-size: 1.667rem; letter-spacing: -0.044rem; }
+  .vc-h3 { font-size: 1.111rem; }
 }
 
 /* -- Eyebrow éditorial -------------------------------------- */
 .vc-eyebrow {
-  font-size: 13px;
+  font-size: 0.722rem;
   font-weight: 700;
   letter-spacing: 0.25em;
   text-transform: uppercase;

@@ -128,116 +128,124 @@ export function AccessibilityBar({
         borderColor: "var(--text-on-ink-faint)",
       }}
     >
-      {/* Ligne compacte : Aa-/+ · 4 thèmes · voix · préférences · aide */}
-      <div className="flex items-center justify-between gap-4 flex-wrap px-6 py-3 text-[15px]">
-        <div className="flex items-center gap-3 font-semibold">
-          <span
-            aria-hidden="true"
-            className="inline-flex items-center justify-center w-7 h-7 rounded-full border-2 text-sm font-bold"
-            style={{ borderColor: "var(--text-on-ink)" }}
-          >
-            Aa
-          </span>
-          <span>Confort de lecture</span>
-        </div>
+      {/* Barre principale — ne wrap jamais, scroll horizontal si besoin.
+          Tous les boutons font 52 px de haut (cible WCAG 2.5.8 ≥ 44 px).
+          shrink-0 sur chaque bouton : ils ne se compriment jamais. */}
+      <div
+        className="flex items-center gap-2 px-4 py-2"
+        style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+      >
+        {/* — Taille du texte — */}
+        <button
+          type="button"
+          aria-label="Diminuer la taille du texte"
+          disabled={decreaseDisabled}
+          onClick={() => setFontSize(FONT_SIZES[Math.max(0, currentSizeIdx - 1)])}
+          className="shrink-0 rounded-lg border-2 font-bold disabled:opacity-40 transition-colors"
+          style={{
+            width: 52, height: 52, fontSize: 17,
+            borderColor: "var(--text-on-ink-faint)",
+            color: "var(--text-on-ink)",
+          }}
+        >
+          Aa −
+        </button>
+        <button
+          type="button"
+          aria-label="Augmenter la taille du texte"
+          disabled={increaseDisabled}
+          onClick={() => setFontSize(FONT_SIZES[Math.min(FONT_SIZES.length - 1, currentSizeIdx + 1)])}
+          className="shrink-0 rounded-lg border-2 font-bold disabled:opacity-40 transition-colors"
+          style={{
+            width: 52, height: 52, fontSize: 17,
+            borderColor: "var(--text-on-ink-faint)",
+            color: "var(--text-on-ink)",
+          }}
+        >
+          Aa +
+        </button>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Taille de texte */}
-          <button
-            type="button"
-            aria-label="Diminuer la taille du texte"
-            disabled={decreaseDisabled}
-            onClick={() =>
-              setFontSize(FONT_SIZES[Math.max(0, currentSizeIdx - 1)])
-            }
-            className="px-3 py-1.5 rounded border text-sm font-semibold disabled:opacity-40"
-            style={{ borderColor: "var(--text-on-ink-faint)", color: "var(--text-on-ink)" }}
-          >
-            Aa −
-          </button>
-          <button
-            type="button"
-            aria-label="Augmenter la taille du texte"
-            disabled={increaseDisabled}
-            onClick={() =>
-              setFontSize(FONT_SIZES[Math.min(FONT_SIZES.length - 1, currentSizeIdx + 1)])
-            }
-            className="px-3 py-1.5 rounded border text-sm font-semibold disabled:opacity-40"
-            style={{ borderColor: "var(--text-on-ink-faint)", color: "var(--text-on-ink)" }}
-          >
-            Aa +
-          </button>
+        {/* séparateur */}
+        <div className="shrink-0 mx-1 w-px h-8" style={{ background: "var(--text-on-ink-faint)" }} aria-hidden="true" />
 
-          <span aria-hidden="true" className="opacity-40 mx-1">·</span>
-
-          {/* 4 thèmes visibles */}
-          {THEME_OPTIONS.map((opt) => {
-            const active = theme === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                aria-label={opt.aria}
-                aria-pressed={active}
-                onClick={() => setTheme(opt.value)}
-                className="px-3 py-1.5 rounded border text-sm"
-                style={{
-                  borderColor: active ? "var(--brass)" : "var(--text-on-ink-faint)",
-                  background: active ? "var(--brass)" : "transparent",
-                  color: active ? "var(--accent-ink)" : "var(--text-on-ink)",
-                  fontWeight: active ? 700 : 600,
-                }}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-
-          <span aria-hidden="true" className="opacity-40 mx-1">·</span>
-
-          {/* Voix */}
-          <button
-            type="button"
-            aria-pressed={voiceEnabled}
-            onClick={() => {
-              const next = !voiceEnabled;
-              setVoiceEnabled(next);
-              safeLocalSet("voixcourses-voice-enabled", String(next));
-              onVoiceToggle?.(next);
-            }}
-            className="px-3 py-1.5 rounded border text-sm font-semibold"
-            style={{
-              borderColor: voiceEnabled ? "var(--brass)" : "var(--text-on-ink-faint)",
-              background: voiceEnabled ? "var(--brass)" : "transparent",
-              color: voiceEnabled ? "var(--accent-ink)" : "var(--text-on-ink)",
-            }}
-          >
-            🔊 Voix {voiceEnabled ? "active" : "coupée"}
-          </button>
-
-          {extension.installed && (
-            <span
-              className="px-2 py-1 rounded text-xs font-bold"
-              style={{ background: "var(--brass)", color: "var(--accent-ink)" }}
-              aria-label={`Extension VoixCourses version ${extension.version} détectée`}
-              title={`Extension v${extension.version}`}
-            >
-              ✓ Extension
-            </span>
-          )}
-
-          {onHelpRequest && (
+        {/* — 4 thèmes — */}
+        {THEME_OPTIONS.map((opt) => {
+          const active = theme === opt.value;
+          return (
             <button
+              key={opt.value}
               type="button"
-              onClick={onHelpRequest}
-              aria-label="Afficher l'aide et les raccourcis clavier"
-              className="px-3 py-1.5 rounded border text-sm font-semibold"
-              style={{ borderColor: "var(--text-on-ink-faint)", color: "var(--text-on-ink)" }}
+              aria-label={opt.aria}
+              aria-pressed={active}
+              onClick={() => setTheme(opt.value)}
+              className="shrink-0 rounded-lg border-2 font-bold transition-all"
+              style={{
+                height: 52, padding: "0 18px", fontSize: 15, whiteSpace: "nowrap",
+                borderColor: active ? "var(--brass)" : "var(--text-on-ink-faint)",
+                background: active ? "var(--brass)" : "transparent",
+                color: active ? "var(--accent-ink)" : "var(--text-on-ink)",
+              }}
             >
-              ? Aide
+              {opt.label}
             </button>
-          )}
-        </div>
+          );
+        })}
+
+        {/* séparateur */}
+        <div className="shrink-0 mx-1 w-px h-8" style={{ background: "var(--text-on-ink-faint)" }} aria-hidden="true" />
+
+        {/* — Voix — */}
+        <button
+          type="button"
+          aria-pressed={voiceEnabled}
+          onClick={() => {
+            const next = !voiceEnabled;
+            setVoiceEnabled(next);
+            safeLocalSet("voixcourses-voice-enabled", String(next));
+            onVoiceToggle?.(next);
+          }}
+          className="shrink-0 rounded-lg border-2 font-bold transition-all"
+          style={{
+            height: 52, padding: "0 18px", fontSize: 15, whiteSpace: "nowrap",
+            borderColor: voiceEnabled ? "var(--brass)" : "var(--text-on-ink-faint)",
+            background: voiceEnabled ? "var(--brass)" : "transparent",
+            color: voiceEnabled ? "var(--accent-ink)" : "var(--text-on-ink)",
+          }}
+        >
+          🔊 Voix {voiceEnabled ? "active" : "coupée"}
+        </button>
+
+        {extension.installed && (
+          <span
+            className="shrink-0 px-3 rounded-lg text-sm font-bold"
+            style={{ height: 52, display: "inline-flex", alignItems: "center", background: "var(--brass)", color: "var(--accent-ink)" }}
+            aria-label={`Extension VoixCourses version ${extension.version} détectée`}
+            title={`Extension v${extension.version}`}
+          >
+            ✓ Extension
+          </span>
+        )}
+
+        {/* séparateur */}
+        {onHelpRequest && (
+          <div className="shrink-0 mx-1 w-px h-8" style={{ background: "var(--text-on-ink-faint)" }} aria-hidden="true" />
+        )}
+
+        {onHelpRequest && (
+          <button
+            type="button"
+            onClick={onHelpRequest}
+            aria-label="Afficher l'aide et les raccourcis clavier"
+            className="shrink-0 rounded-lg border-2 font-bold transition-colors"
+            style={{
+              height: 52, padding: "0 18px", fontSize: 15, whiteSpace: "nowrap",
+              borderColor: "var(--text-on-ink-faint)",
+              color: "var(--text-on-ink)",
+            }}
+          >
+            ? Aide
+          </button>
+        )}
       </div>
 
       {/* Préférences avancées — repliées par défaut */}
