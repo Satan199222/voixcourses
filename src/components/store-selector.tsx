@@ -14,6 +14,7 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
   const [selectingRef, setSelectingRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [postalError, setPostalError] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const firstStoreRef = useRef<HTMLButtonElement>(null);
   const justSearchedRef = useRef(false);
 
@@ -50,6 +51,9 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
     if (!postalCode.trim()) return;
     setIsLoading(true);
     setError(null);
+    // Annonce immédiate : sans ça, l'utilisateur clique "Chercher" et entend
+    // le silence pendant que la requête tourne (500ms à plusieurs secondes).
+    setStatusMsg("Recherche des magasins en cours...");
     try {
       const res = await fetch(`/api/stores?postalCode=${postalCode}`);
       if (!res.ok) {
@@ -145,6 +149,11 @@ export function StoreSelector({ onStoreSelected }: StoreSelectorProps) {
           {error}
         </div>
       )}
+
+      {/* Annonce status (recherche en cours) — polite pour ne pas interrompre */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {isLoading && statusMsg ? statusMsg : ""}
+      </div>
 
       {stores.length > 0 && (
         <div

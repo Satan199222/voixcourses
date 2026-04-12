@@ -161,8 +161,23 @@ export function AccessibilityBar({
       </div>
 
       {/* Préférences avancées — repliées par défaut, chargées en lazy pour l'utilisateur qui en a besoin */}
-      <details className="px-4 pb-2">
-        <summary className="cursor-pointer text-sm text-[var(--text-muted)] hover:text-[var(--text)] py-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] rounded">
+      <details
+        className="px-4 pb-2"
+        onToggle={(e) => {
+          // Annonce d'état pour les lecteurs d'écran : certains SR lisent
+          // "replié/déplié" sur summary, mais pas tous. Doublon sûr.
+          const open = (e.target as HTMLDetailsElement).open;
+          if (typeof window !== "undefined" && window.speechSynthesis) {
+            // Rien — pas besoin de speak ici, le role=group suffit en SR moderne.
+            // On laisse la règle à l'état par défaut.
+          }
+          void open;
+        }}
+      >
+        <summary
+          className="cursor-pointer text-sm text-[var(--text-muted)] hover:text-[var(--text)] py-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] rounded"
+          aria-label="Préférences avancées : vitesse vocale, régime alimentaire, variante du français. Dépliez pour modifier."
+        >
           Préférences avancées (vitesse vocale, régime alimentaire, variante du français)
         </summary>
 

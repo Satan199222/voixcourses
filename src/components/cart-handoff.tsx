@@ -36,8 +36,8 @@ export function CartHandoff({
   const [copied, setCopied] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [sendStatus, setSendStatus] = useState<string | null>(null);
-  const [openedTab, setOpenedTab] = useState(false);
   const extension = useExtension();
 
   if (!cart || cart.items.length === 0) return null;
@@ -73,6 +73,7 @@ export function CartHandoff({
 
     setSending(false);
     if (result.ok) {
+      setSent(true);
       setSendStatus(
         `Liste envoyée à l'extension. Un nouvel onglet Carrefour s'est ouvert — cliquez sur le bouton "Remplir mon panier" en haut de la page.`
       );
@@ -92,12 +93,11 @@ export function CartHandoff({
         "_blank",
         "noopener,noreferrer"
       );
-      if (newWindow) setOpenedTab(true);
+      void newWindow;
 
       // Reset après 10s pour que le message reste lisible
       setTimeout(() => {
         setCopied(false);
-        setOpenedTab(false);
       }, 10000);
     } catch {
       // Fallback si Clipboard API échoue (rare, mais sur certains browsers
@@ -169,13 +169,23 @@ export function CartHandoff({
           <button
             type="button"
             onClick={handleSendToExtension}
-            disabled={sending}
-            aria-label={`Envoyer ${cart.items.length} produit${cart.items.length > 1 ? "s" : ""} à l'extension VoixCourses pour remplir le panier Carrefour`}
-            className="w-full px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors"
+            disabled={sending || sent}
+            aria-label={
+              sent
+                ? "Liste déjà envoyée à l'extension"
+                : `Envoyer ${cart.items.length} produit${cart.items.length > 1 ? "s" : ""} à l'extension VoixCourses pour remplir le panier Carrefour`
+            }
+            className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-colors ${
+              sent
+                ? "bg-[var(--success)] text-[var(--bg)] cursor-default"
+                : "bg-[var(--accent)] text-[var(--bg)] hover:bg-[var(--accent-hover)] disabled:opacity-50"
+            }`}
           >
-            {sending
-              ? "Envoi en cours..."
-              : `Envoyer à Carrefour (${cart.items.length} produit${cart.items.length > 1 ? "s" : ""})`}
+            {sent
+              ? "✓ Liste envoyée à l'extension"
+              : sending
+                ? "Envoi en cours..."
+                : `Envoyer à Carrefour (${cart.items.length} produit${cart.items.length > 1 ? "s" : ""})`}
           </button>
 
           {sendStatus && (

@@ -7,7 +7,11 @@ import {
   type BrowserInfo,
 } from "@/lib/extension/browser-detection";
 
-const DISMISS_KEY = "voixcourses-install-banner-dismissed";
+const DISMISS_KEY = "voixcourses-install-banner-dismissed-at";
+/** Le banner réapparaît après ce délai (sinon jamais) — on ne veut pas
+ *  l'imposer chaque visite, mais un utilisateur qui découvre VoixCourses
+ *  n'installe pas toujours dès la 1ʳᵉ fois. 7 jours semblent raisonnables. */
+const REMIND_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Bandeau "Installer l'extension" — affiché uniquement si :
@@ -24,7 +28,16 @@ export function InstallExtensionBanner() {
 
   useEffect(() => {
     setBrowser(detectBrowser());
-    setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
+    const dismissedAt = localStorage.getItem(DISMISS_KEY);
+    if (dismissedAt) {
+      const ts = parseInt(dismissedAt, 10);
+      if (!Number.isNaN(ts) && Date.now() - ts < REMIND_AFTER_MS) {
+        setDismissed(true);
+      } else {
+        // Expiration : on oublie le dismiss passé pour rappeler à nouveau
+        localStorage.removeItem(DISMISS_KEY);
+      }
+    }
   }, []);
 
   if (extension.installed) return null;
@@ -32,7 +45,7 @@ export function InstallExtensionBanner() {
   if (!browser) return null;
 
   function handleDismiss() {
-    localStorage.setItem(DISMISS_KEY, "1");
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
     setDismissed(true);
   }
 
@@ -67,16 +80,15 @@ export function InstallExtensionBanner() {
     <aside
       role="region"
       aria-label="Installer l'extension VoixCourses"
-      className="p-4 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] flex items-start gap-3"
+      className="p-4 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] flex flex-col sm:flex-row items-start gap-3"
     >
       <span aria-hidden className="text-2xl shrink-0">⚡</span>
-      <div className="flex-1 text-sm">
+      <div className="flex-1 text-sm min-w-0">
         <strong className="block mb-1">
           Installez l&apos;extension pour aller 10 fois plus vite
         </strong>
         <p className="text-[var(--text-muted)] mb-2">
           Avec l&apos;extension, votre panier Carrefour se remplit en 1 clic.
-          Sans elle, vous devrez utiliser un bookmarklet moins pratique.
           Installation en 30 secondes.
         </p>
         <div className="flex gap-2 flex-wrap">
@@ -103,8 +115,8 @@ export function InstallExtensionBanner() {
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Masquer cette suggestion (réapparaîtra plus tard)"
-        className="text-[var(--text-muted)] hover:text-[var(--text)] shrink-0 text-sm"
+        aria-label="Masquer cette suggestion (réapparaîtra dans 7 jours)"
+        className="self-end sm:self-start text-[var(--text-muted)] hover:text-[var(--text)] shrink-0 text-sm px-2"
       >
         ✕
       </button>

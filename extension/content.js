@@ -620,8 +620,14 @@ async function showBanner(list) {
   fillBtn.addEventListener("click", () => applyList("add"));
   if (replaceBtn) {
     replaceBtn.addEventListener("click", () => {
-      const confirmMsg = `Voulez-vous vider votre panier actuel et le remplacer par la liste VoixCourses ?`;
-      if (window.confirm(confirmMsg)) applyList("replace");
+      // Dialog custom accessible plutôt que window.confirm — ce dernier
+      // est non-stylé (moche) et a un comportement erratique avec certains
+      // screen readers (focus perdu après OK/Cancel).
+      showReplaceConfirmDialog({
+        currentCount: currentCart.itemCount,
+        newCount: itemCount,
+        onConfirm: () => applyList("replace"),
+      });
     });
   }
   if (editBtn) {
@@ -668,6 +674,123 @@ async function showBanner(list) {
     }
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
+}
+
+/**
+ * Dialog custom de confirmation pour le remplacement du panier.
+ * Accessible au clavier (focus trap, Escape pour annuler, Enter pour confirmer),
+ * role="dialog" aria-modal, annoncé par TTS à l'ouverture.
+ */
+function showReplaceConfirmDialog({ currentCount, newCount, onConfirm }) {
+  const DIALOG_ID = "voixcourses-confirm-dialog";
+  if (document.getElementById(DIALOG_ID)) return;
+
+  const backdrop = el("div", {
+    id: DIALOG_ID,
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "voixcourses-confirm-title",
+      "aria-describedby": "voixcourses-confirm-msg",
+    },
+    style:
+      "position:fixed;inset:0;z-index:2147483647;" +
+      "display:flex;align-items:center;justify-content:center;" +
+      "background:rgba(0,0,0,0.75);padding:16px;font-family:system-ui,sans-serif;",
+  });
+
+  const box = el("div", {
+    style:
+      "max-width:440px;width:100%;background:#1a1a2e;color:#f0f0f5;" +
+      "border:2px solid #4cc9f0;border-radius:12px;padding:24px;" +
+      "box-shadow:0 20px 60px rgba(0,0,0,0.6);",
+  });
+
+  const title = el("h2", {
+    id: "voixcourses-confirm-title",
+    text: "Remplacer le panier ?",
+    style: "margin:0 0 12px 0;font-size:20px;color:#f0f0f5;",
+  });
+
+  const msg = el("p", {
+    id: "voixcourses-confirm-msg",
+    text: `Votre panier actuel (${currentCount} article${currentCount > 1 ? "s" : ""}) sera vidé et remplacé par la liste VoixCourses (${newCount} produit${newCount > 1 ? "s" : ""}). Cette action est irréversible.`,
+    style: "margin:0 0 20px 0;color:#a0a8b8;line-height:1.5;",
+  });
+
+  const actions = el("div", {
+    style: "display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;",
+  });
+
+  const cancelBtn = el("button", {
+    text: "Annuler",
+    attrs: { type: "button", "aria-label": "Annuler et garder mon panier actuel" },
+    style:
+      "padding:10px 20px;background:transparent;color:#f0f0f5;" +
+      "border:2px solid #2b3a55;border-radius:8px;font-weight:600;cursor:pointer;",
+  });
+
+  const confirmBtn = el("button", {
+    text: "Vider et remplacer",
+    attrs: {
+      type: "button",
+      "aria-label":
+        "Confirmer : vider le panier actuel et le remplacer par la liste VoixCourses",
+    },
+    style:
+      "padding:10px 20px;background:#ff6b8a;color:#0f0f1a;" +
+      "border:0;border-radius:8px;font-weight:700;cursor:pointer;",
+  });
+
+  actions.appendChild(cancelBtn);
+  actions.appendChild(confirmBtn);
+  box.appendChild(title);
+  box.appendChild(msg);
+  box.appendChild(actions);
+  backdrop.appendChild(box);
+  document.documentElement.appendChild(backdrop);
+
+  tts.speak(
+    `Confirmer le remplacement du panier ? ${currentCount} articles seront supprimés.`
+  );
+
+  // Focus sur Annuler par défaut (option sûre)
+  setTimeout(() => cancelBtn.focus(), 50);
+
+  function close() {
+    backdrop.remove();
+    document.removeEventListener("keydown", keyHandler, true);
+  }
+  function confirm() {
+    close();
+    onConfirm();
+  }
+
+  const keyHandler = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Tab") {
+      // Focus trap entre les 2 boutons
+      const focusables = [cancelBtn, confirmBtn];
+      const active = document.activeElement;
+      const idx = focusables.indexOf(active);
+      if (e.shiftKey && idx <= 0) {
+        e.preventDefault();
+        focusables[focusables.length - 1].focus();
+      } else if (!e.shiftKey && idx === focusables.length - 1) {
+        e.preventDefault();
+        focusables[0].focus();
+      }
+    }
+  };
+
+  cancelBtn.addEventListener("click", close);
+  confirmBtn.addEventListener("click", confirm);
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) close();
+  });
+  document.addEventListener("keydown", keyHandler, true);
 }
 
 // ── Padding du body : éviter que la bannière masque le contenu Carrefour ──

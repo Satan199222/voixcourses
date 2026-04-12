@@ -11,6 +11,9 @@ import { ProductResults } from "@/components/product-results";
 import { CartHandoff } from "@/components/cart-handoff";
 import { HelpDialog } from "@/components/help-dialog";
 import { InstallExtensionBanner } from "@/components/install-extension-banner";
+import { Onboarding } from "@/components/onboarding";
+import { Footer } from "@/components/footer";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { useSpeech } from "@/lib/speech/use-speech";
 import { useFocusAnnounce } from "@/lib/speech/use-focus-announce";
 import { useLongTaskAnnounce } from "@/lib/speech/use-long-task-announce";
@@ -271,6 +274,17 @@ export default function Home() {
     results: "Étape 3 sur 4 : Choisissez vos produits",
     cart: "Étape 4 sur 4 : Votre panier",
   }[step];
+
+  // Document.title refléte l'étape — utile quand l'utilisateur a plusieurs
+  // onglets ouverts et cherche à retrouver VoixCourses dans sa barre d'onglets.
+  const shortStep = {
+    store: "Magasin",
+    input: "Liste",
+    clarification: "Précisez",
+    results: "Produits",
+    cart: "Panier",
+  }[step];
+  useDocumentTitle(`VoixCourses — ${shortStep}`);
 
   // ── Store selected ─────────────────────────────────────────────────────────
   async function handleStoreSelected(store: CarrefourStore, bsid: string) {
@@ -724,7 +738,10 @@ export default function Home() {
       {/* Alertes critiques (assertive, interrompent le lecteur d'écran) */}
       <LiveRegion message={criticalAlert} urgency="assertive" />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <div
+        className="max-w-2xl mx-auto px-4 py-8 space-y-8"
+        inert={helpOpen}
+      >
         <header className="flex items-center gap-4">
           <div
             className="shrink-0 w-16 h-16 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--accent)] flex items-center justify-center text-[var(--accent)]"
@@ -746,6 +763,35 @@ export default function Home() {
             utilisateurs voyants qui veulent situer leur progression. */}
         <StepProgress step={step} />
 
+        {/* Onboarding première visite — carte 3 étapes skippable. */}
+        {step === "store" && <Onboarding />}
+
+        {/* Magasin actuellement sélectionné — affiché pendant tout le flow
+            pour que l'utilisateur sache toujours où il commande. */}
+        {storeName && step !== "store" && (
+          <div
+            className="flex items-center justify-between gap-2 text-sm p-3 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)]"
+            aria-label={`Magasin sélectionné : ${storeName}`}
+          >
+            <span className="text-[var(--text-muted)]">
+              📍 Magasin : <strong className="text-[var(--text)]">{storeName}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (step === "cart") return; // pas pertinent en fin de flow
+                announce("Changement de magasin.");
+                setStep("store");
+              }}
+              disabled={step === "cart"}
+              className="text-[var(--accent)] underline text-xs disabled:opacity-50 disabled:no-underline"
+              aria-label="Changer de magasin"
+            >
+              Changer
+            </button>
+          </div>
+        )}
+
         {/* Suggestion d'installation de l'extension — affichée uniquement
             si non installée et navigateur supporté. Se masque au dismiss. */}
         {step !== "cart" && <InstallExtensionBanner />}
@@ -761,11 +807,14 @@ export default function Home() {
         </h2>
 
         {step === "store" && (
-          <StoreSelector onStoreSelected={handleStoreSelected} />
+          <div key="step-store" className="step-fade">
+            <StoreSelector onStoreSelected={handleStoreSelected} />
+          </div>
         )}
 
         {step === "input" && (
-          <GroceryInput
+          <div key="step-input" className="step-fade">
+            <GroceryInput
             onSubmit={handleSubmit}
             isLoading={isLoading}
             isListening={isListening}
@@ -777,10 +826,12 @@ export default function Home() {
             onCancelSpeech={cancelSpeech}
             isSpeaking={isSpeaking}
           />
+          </div>
         )}
 
         {step === "clarification" && (
-          <ListClarification
+          <div key="step-clarif" className="step-fade">
+            <ListClarification
             items={parsedItems}
             onUpdate={(index, update) => {
               setParsedItems((prev) =>
@@ -804,10 +855,11 @@ export default function Home() {
               setStep("input");
             }}
           />
+          </div>
         )}
 
         {step === "results" && (
-          <>
+          <div key="step-results" className="step-fade space-y-6">
             {allConfirmed && (
               <a
                 href="#add-to-cart-button"
@@ -935,16 +987,18 @@ export default function Home() {
                 {`Valider ma liste (${confirmedProducts.length} produit${confirmedProducts.length > 1 ? "s" : ""}, ${totalEstimated.toFixed(2)}€)`}
               </button>
             )}
-          </>
+          </div>
         )}
 
         {step === "cart" && storeRef && basketServiceId && (
-          <CartHandoff
-            cart={cart}
-            slot={slot}
-            storeRef={storeRef}
-            basketServiceId={basketServiceId}
-          />
+          <div key="step-cart" className="step-fade">
+            <CartHandoff
+              cart={cart}
+              slot={slot}
+              storeRef={storeRef}
+              basketServiceId={basketServiceId}
+            />
+          </div>
         )}
 
         {step !== "store" && step !== "input" && (
@@ -956,15 +1010,8 @@ export default function Home() {
           </button>
         )}
 
-        {step === "input" && (
-          <button
-            onClick={() => setStep("store")}
-            className="text-[var(--text-muted)] underline text-sm block"
-          >
-            Changer de magasin
-          </button>
-        )}
       </div>
+      <Footer />
     </>
   );
 }

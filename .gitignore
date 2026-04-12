@@ -5,3 +5,10 @@ probes/scratch/
 .env.local
 .next/
 .vercel/
+
+# Extension Chrome empaquetée (`chrome --pack-extension` génère ces 2 fichiers).
+# Le .pem est une CLÉ PRIVÉE de signature — ne jamais committer.
+extension.crx
+extension.pem
+*.crx
+*.pem

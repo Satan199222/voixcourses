@@ -91,6 +91,13 @@ export function GroceryInput({
   function reuseLast() {
     if (!lastOrder) return;
     setText(lastOrder.listText);
+    // Annonce explicite : sans ça l'utilisateur non-voyant ne sait pas que
+    // le textarea a été rempli. Le focus reste sur le bouton cliqué.
+    if (onSpeak) {
+      onSpeak(
+        `Dernière liste chargée : ${lastOrder.count} produit${lastOrder.count > 1 ? "s" : ""}. Vous pouvez la modifier avant de valider.`
+      );
+    }
   }
 
   return (
@@ -109,32 +116,45 @@ export function GroceryInput({
 
       {/* Reprise de la dernière commande — gros gain UX pour les habitués.
           Affiché comme bouton dédié, placé AVANT le textarea pour que les
-          utilisateurs qui naviguent au Tab y tombent immédiatement. */}
-      {lastOrder && (
-        <div
-          className="p-3 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--bg-surface)] flex items-center justify-between gap-3 flex-wrap"
-          aria-label="Dernière commande disponible"
-        >
-          <div className="text-sm">
-            <div className="font-semibold">
-              Dernière commande : {lastOrder.count} produit
-              {lastOrder.count > 1 ? "s" : ""} ({lastOrder.total.toFixed(2)}€)
-            </div>
-            <div className="text-[var(--text-muted)] text-xs">
-              {formatOrderDate(lastOrder.at)}
-              {lastOrder.storeName ? ` · ${lastOrder.storeName}` : ""}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={reuseLast}
-            aria-label={`Reprendre la dernière commande : ${lastOrder.listText}`}
-            className="px-4 py-2 rounded bg-[var(--accent)] text-[var(--bg)] font-semibold text-sm hover:bg-[var(--accent-hover)] transition-colors"
+          utilisateurs qui naviguent au Tab y tombent immédiatement.
+          Badge "ancienne" si > 7 jours : l'utilisateur peut préférer refaire. */}
+      {lastOrder && (() => {
+        const ageMs = Date.now() - new Date(lastOrder.at).getTime();
+        const isOld = ageMs > 7 * 24 * 60 * 60 * 1000;
+        return (
+          <div
+            className="p-3 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--bg-surface)] flex items-center justify-between gap-3 flex-wrap"
+            aria-label="Dernière commande disponible"
           >
-            Reprendre cette liste
-          </button>
-        </div>
-      )}
+            <div className="text-sm">
+              <div className="font-semibold flex items-center gap-2 flex-wrap">
+                Dernière commande : {lastOrder.count} produit
+                {lastOrder.count > 1 ? "s" : ""} ({lastOrder.total.toFixed(2)}€)
+                {isOld && (
+                  <span
+                    className="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--accent)] text-xs text-[var(--accent)]"
+                    aria-label="Commande datant de plus de 7 jours"
+                  >
+                    ancienne
+                  </span>
+                )}
+              </div>
+              <div className="text-[var(--text-muted)] text-xs">
+                {formatOrderDate(lastOrder.at)}
+                {lastOrder.storeName ? ` · ${lastOrder.storeName}` : ""}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={reuseLast}
+              aria-label={`Reprendre la dernière commande ${isOld ? "(datant de plus de 7 jours) " : ""}: ${lastOrder.listText}`}
+              className="px-4 py-2 rounded bg-[var(--accent)] text-[var(--bg)] font-semibold text-sm hover:bg-[var(--accent-hover)] transition-colors"
+            >
+              Reprendre cette liste
+            </button>
+          </div>
+        );
+      })()}
 
       <textarea
         id="grocery-list"
@@ -178,7 +198,9 @@ export function GroceryInput({
               if (isSpeaking) {
                 onCancelSpeech?.();
               } else if (displayText.trim()) {
-                onSpeak(`Votre liste : ${displayText.trim()}`);
+                // Pas de préfixe "Votre liste :" — redondant, l'utilisateur
+                // vient de cliquer sur "Écouter" donc le contexte est clair.
+                onSpeak(displayText.trim());
               }
             }}
             disabled={!displayText.trim() || isListening}
