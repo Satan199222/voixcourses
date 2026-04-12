@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useExtension } from "@/lib/extension/use-extension";
 
 interface AccessibilityBarProps {
   onVoiceToggle?: (enabled: boolean) => void;
@@ -17,6 +18,7 @@ export function AccessibilityBar({ onVoiceToggle }: AccessibilityBarProps = {}) 
     return localStorage.getItem("voixcourses-font-size") || "1.125rem";
   });
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const extension = useExtension();
 
   useEffect(() => {
     // Le thème est appliqué sur <html> (par theme-init.ts au boot, et ici sur changement)
@@ -84,6 +86,20 @@ export function AccessibilityBar({ onVoiceToggle }: AccessibilityBarProps = {}) 
         />
         <span className="font-semibold text-[var(--text-muted)]">Retour vocal</span>
       </label>
+
+      {/* Indicateur de présence de l'extension */}
+      {extension.installed && (
+        <>
+          <div className="border-l border-[var(--border)] h-5" aria-hidden="true" />
+          <span
+            className="text-[var(--success)] font-semibold"
+            aria-label={`Extension VoixCourses version ${extension.version} détectée`}
+            title={`Extension v${extension.version}`}
+          >
+            ✓ Extension détectée
+          </span>
+        </>
+      )}
     </div>
   );
 }
