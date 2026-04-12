@@ -75,6 +75,18 @@ export default function ConversationPageClient() {
     }
   }, []);
 
+  // Écoute l'event end_conversation du tool pour pouvoir afficher un
+  // message final / redirection si besoin. Le widget se ferme de lui-même
+  // après l'action finale (finalize_cart ouvre l'onglet Carrefour).
+  useEffect(() => {
+    const handler = () => {
+      setAnnounce("Conversation terminée. Merci d'avoir utilisé VoixCourses.");
+    };
+    window.addEventListener("voixcourses:end-conversation", handler);
+    return () =>
+      window.removeEventListener("voixcourses:end-conversation", handler);
+  }, []);
+
   // Enregistrement des client tools AVANT que le script widget se charge.
   // ElevenLabs lit window.elevenlabsConvai.clientTools au moment de la
   // connexion — on doit donc poser les handlers ici, au mount, avant <Script>.
@@ -83,6 +95,40 @@ export default function ConversationPageClient() {
 
     window.elevenlabsConvai = window.elevenlabsConvai || {};
     window.elevenlabsConvai.clientTools = {
+      /**
+       * Récupère les détails complets d'un produit (Nutriscore, ingrédients,
+       * allergènes, info nutritionnelle) pour que l'agent puisse répondre à
+       * des questions type "c'est bio ?", "c'est quel Nutriscore ?", "qu'y a-t-il dedans ?"
+       */
+      async get_product_details(params: { ean?: string; slug?: string }) {
+        const qs = new URLSearchParams();
+        if (params.ean) qs.set("ean", params.ean);
+        if (params.slug) qs.set("slug", params.slug);
+        if (!qs.toString()) return { error: "ean ou slug requis" };
+        try {
+          const res = await fetch(`/api/product/details?${qs}`);
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            return { error: err.error ?? `HTTP ${res.status}` };
+          }
+          return await res.json();
+        } catch (err) {
+          return { error: err instanceof Error ? err.message : "fetch failed" };
+        }
+      },
+
+      /**
+       * Met fin à la conversation proprement après une action finale.
+       * Dispatch un event côté window que l'UI peut écouter si besoin — mais
+       * surtout signale à l'agent qu'il peut fermer naturellement ensuite.
+       * L'agent doit dire au revoir AVANT d'appeler ce tool.
+       */
+      end_conversation() {
+        window.dispatchEvent(new CustomEvent("voixcourses:end-conversation"));
+        return { success: true };
+      },
+
+
       async search_product(params: { query?: string; quantity?: number }) {
         const q = params.query?.trim();
         if (!q) return { error: "query manquant" };
@@ -371,10 +417,11 @@ export default function ConversationPageClient() {
           <ConvaiWidget
             agent-id={AGENT_ID}
             variant="expanded"
+            placement="embed"
             dynamic-variables={dynamicVariables}
             action-text="Parlez à l'assistante"
             start-call-text="Démarrer la conversation"
-            end-call-text="Arrêter"
+            end-call-text="Raccrocher"
             listening-text="Je vous écoute…"
             speaking-text="Je vous réponds…"
             avatar-orb-color-1="#4cc9f0"
