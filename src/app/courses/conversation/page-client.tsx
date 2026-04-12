@@ -304,6 +304,32 @@ export default function ConversationPageClient() {
   const totalCart = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const articleCount = cart.reduce((n, i) => n + i.quantity, 0);
 
+  // Dynamic variables : le prompt côté dashboard peut référencer
+  // {{store_name}}, {{extension_installed}}, etc. Évite un appel à
+  // get_user_context au démarrage — l'agent a tout directement.
+  const dynamicVariables = JSON.stringify({
+    store_name: storeName || "non sélectionné",
+    store_ref:
+      (typeof window !== "undefined" && localStorage.getItem("storeRef")) ||
+      "",
+    extension_installed: extension.installed ? "oui" : "non",
+    diet: prefs.diet.length > 0 ? prefs.diet.join(", ") : "aucun",
+    allergens:
+      prefs.allergens.length > 0 ? prefs.allergens.join(", ") : "aucun",
+    last_order_count: history.lastEntry
+      ? String(history.lastEntry.count)
+      : "0",
+    last_order_days_ago: history.lastEntry
+      ? String(
+          Math.round(
+            (Date.now() - new Date(history.lastEntry.at).getTime()) /
+              (24 * 60 * 60 * 1000)
+          )
+        )
+      : "",
+    last_order_list: history.lastEntry ? history.lastEntry.listText : "",
+  });
+
   return (
     <>
       <AccessibilityBar />
@@ -326,13 +352,35 @@ export default function ConversationPageClient() {
             </span>
           </h1>
           <p className="text-[var(--text-muted)]">
-            Cliquez sur l&apos;assistante en bas à droite de l&apos;écran et
-            parlez-lui comme à un humain. Elle cherche vos produits, pose des
-            questions, et remplit votre panier.
+            Cliquez sur le bouton ci-dessous et parlez à l&apos;assistante
+            comme à un humain. Elle cherche vos produits, pose des questions,
+            et remplit votre panier.
           </p>
         </header>
 
         <InstallExtensionBanner />
+
+        {/* Widget ElevenLabs — intégré dans le flow visuel, pas en pastille
+            flottante. variant="expanded" donne une zone dédiée centrée qu'on
+            peut styler (orb + transcript + contrôles). */}
+        <section
+          aria-label="Assistante vocale VoixCourses"
+          className="p-4 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--accent)]"
+          style={{ minHeight: "420px" }}
+        >
+          <ConvaiWidget
+            agent-id={AGENT_ID}
+            variant="expanded"
+            dynamic-variables={dynamicVariables}
+            action-text="Parlez à l'assistante"
+            start-call-text="Démarrer la conversation"
+            end-call-text="Arrêter"
+            listening-text="Je vous écoute…"
+            speaking-text="Je vous réponds…"
+            avatar-orb-color-1="#4cc9f0"
+            avatar-orb-color-2="#7ae0ff"
+          />
+        </section>
 
         {/* Contexte visible — aide l'utilisateur à vérifier avant de démarrer */}
         <div
@@ -409,17 +457,9 @@ export default function ConversationPageClient() {
 
       <Footer />
 
-      {/* Widget ElevenLabs — pastille flottante bottom-right. Le script init
-          se lance après le montage. Les client tools sont enregistrés sur
-          window.elevenlabsConvai via useEffect ci-dessus. */}
-      <ConvaiWidget
-        agent-id={AGENT_ID}
-        action-text="Parlez à l'assistante"
-        start-call-text="Démarrer la conversation"
-        end-call-text="Arrêter"
-        listening-text="Je vous écoute…"
-        speaking-text="Je vous réponds…"
-      />
+      {/* Script du widget — chargé une fois côté client. Le custom element
+          <elevenlabs-convai> monté plus haut s'initialise quand le script
+          a fini d'enregistrer le web component. */}
       <Script
         src="https://unpkg.com/@elevenlabs/convai-widget-embed"
         strategy="lazyOnload"
