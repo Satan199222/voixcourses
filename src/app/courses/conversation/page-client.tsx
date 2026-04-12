@@ -16,7 +16,8 @@ import { InstallExtensionBanner } from "@/components/install-extension-banner";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { sendListToExtension, useExtension } from "@/lib/extension/use-extension";
 import { usePreferences } from "@/lib/preferences/use-preferences";
-import type { CarrefourProduct } from "@/lib/carrefour/types";
+import { useOrderHistory } from "@/lib/history/use-order-history";
+import type { CarrefourProduct, CarrefourStore } from "@/lib/carrefour/types";
 
 /**
  * Mode Conversation — architecture ElevenLabs Agents.
@@ -83,19 +84,29 @@ interface UIProps {
 function ConversationUI({ setAnnounce, error, setError }: UIProps) {
   const extension = useExtension();
   const { prefs } = usePreferences();
-  const { startSession, endSession, sendUserMessage } = useConversationControls();
+  const history = useOrderHistory();
+  const { startSession, endSession, sendUserMessage, sendContextualUpdate } =
+    useConversationControls();
   const { status } = useConversationStatus();
   const { mode } = useConversationMode(); // "speaking" | "listening"
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [cart, setCart] = useState<AgentCartItem[]>([]);
   const [textInput, setTextInput] = useState("");
+  const [storeName, setStoreName] = useState<string | null>(null);
 
   // Ref toujours frais pour que get_cart_summary lise le panier courant
   const cartRef = useRef<AgentCartItem[]>([]);
   useEffect(() => {
     cartRef.current = cart;
   }, [cart]);
+
+  // Synchroniser le nom du magasin sélectionné (pour l'afficher dans l'UI)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setStoreName(localStorage.getItem("storeName"));
+    }
+  }, []);
 
   // ── Tools — enregistrement via hook, ref pattern interne garantit closure fresh ─
   useConversationClientTool(
@@ -176,6 +187,134 @@ function ConversationUI({ setAnnounce, error, setError }: UIProps) {
     });
   });
 
+  // ── NOUVEAUX TOOLS : contexte, magasin, historique ────────────────────────
+
+  /**
+   * Retourne un snapshot de l'état utilisateur : magasin, extension, régime,
+   * dernière commande. L'agent peut l'appeler à tout moment pour se mettre
+   * à jour (mais un contextual_update initial le donne déjà au démarrage).
+   */
+  useConversationClientTool("get_user_context", (): string => {
+    const storeRef =
+      typeof window !== "undefined" ? localStorage.getItem("storeRef") : null;
+    const sName =
+      typeof window !== "undefined" ? localStorage.getItem("storeName") : null;
+    return JSON.stringify({
+      store: storeRef ? { ref: storeRef, name: sName } : null,
+      extension_installed: extension.installed,
+      diet: prefs.diet,
+      allergens: prefs.allergens,
+      last_order: history.lastEntry
+        ? {
+            count: history.lastEntry.count,
+            total: history.lastEntry.total,
+            list_text: history.lastEntry.listText,
+            days_ago: Math.round(
+              (Date.now() - new Date(history.lastEntry.at).getTime()) /
+                (24 * 60 * 60 * 1000)
+            ),
+          }
+        : null,
+    });
+  });
+
+  /**
+   * Liste les Carrefour proches d'un code postal. L'agent appelle ça quand
+   * l'utilisateur n'a pas encore de magasin (ou veut en changer).
+   */
+  useConversationClientTool(
+    "list_stores_by_postal_code",
+    async (params: Record<string, unknown>): Promise<string> => {
+      const cp = typeof params.postal_code === "string" ? params.postal_code : "";
+      if (!/^\d{5}$/.test(cp)) {
+        return JSON.stringify({
+          error: "Code postal invalide (5 chiffres attendus)",
+        });
+      }
+      try {
+        const res = await fetch(`/api/stores?postalCode=${cp}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return JSON.stringify({ error: err.error ?? `HTTP ${res.status}` });
+        }
+        const data = await res.json();
+        const stores: CarrefourStore[] = data.stores ?? [];
+        return JSON.stringify({
+          stores: stores.slice(0, 5).map((s) => ({
+            ref: s.ref,
+            name: s.name,
+            format: s.format,
+            distance_km: s.distance,
+          })),
+        });
+      } catch (err) {
+        return JSON.stringify({
+          error: err instanceof Error ? err.message : "fetch failed",
+        });
+      }
+    }
+  );
+
+  /**
+   * Sélectionne un magasin (appelle /api/stores POST pour initialiser la
+   * session Carrefour + extraire le basketServiceId). Persiste en localStorage.
+   */
+  useConversationClientTool(
+    "select_store",
+    async (params: Record<string, unknown>): Promise<string> => {
+      const storeRef = typeof params.store_ref === "string" ? params.store_ref : "";
+      const name = typeof params.store_name === "string" ? params.store_name : "";
+      if (!storeRef) return JSON.stringify({ error: "store_ref requis" });
+      try {
+        const res = await fetch("/api/stores", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ storeRef }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return JSON.stringify({ error: err.error ?? `HTTP ${res.status}` });
+        }
+        const data = await res.json();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("storeRef", storeRef);
+          if (data.basketServiceId) {
+            localStorage.setItem("basketServiceId", data.basketServiceId);
+          }
+          if (name) localStorage.setItem("storeName", name);
+        }
+        setStoreName(name || null);
+        return JSON.stringify({ success: true, store_name: name });
+      } catch (err) {
+        return JSON.stringify({
+          error: err instanceof Error ? err.message : "fetch failed",
+        });
+      }
+    }
+  );
+
+  /**
+   * Pré-remplit le panier avec la dernière commande de l'utilisateur.
+   * L'agent ré-appelle search_product pour chaque ligne (pour avoir les EAN
+   * actuels et prix à jour), puis add_to_cart — c'est plus fiable qu'utiliser
+   * des EAN stockés qui peuvent avoir disparu du catalogue.
+   *
+   * Cette fonction retourne juste le texte de la liste pour que l'agent le
+   * lise naturellement et le traite comme une dictée utilisateur.
+   */
+  useConversationClientTool("get_last_order", (): string => {
+    if (!history.lastEntry) return JSON.stringify({ error: "Aucune commande précédente." });
+    return JSON.stringify({
+      list_text: history.lastEntry.listText,
+      count: history.lastEntry.count,
+      total: history.lastEntry.total,
+      days_ago: Math.round(
+        (Date.now() - new Date(history.lastEntry.at).getTime()) /
+          (24 * 60 * 60 * 1000)
+      ),
+    });
+  });
+
   useConversationClientTool("finalize_cart", async (): Promise<string> => {
     const items = cartRef.current;
     if (items.length === 0) return JSON.stringify({ error: "Panier vide." });
@@ -221,6 +360,63 @@ function ConversationUI({ setAnnounce, error, setError }: UIProps) {
     });
   });
 
+  /**
+   * Construit un résumé de contexte utilisateur injecté dans la conversation
+   * au démarrage via sendContextualUpdate. L'agent s'en sert pour adapter
+   * son premier message (proposer de reprendre la dernière commande, de
+   * choisir un magasin, d'installer l'extension, etc.).
+   */
+  function buildContextText(): string {
+    const parts: string[] = [];
+    const storeRef =
+      typeof window !== "undefined" ? localStorage.getItem("storeRef") : null;
+    const sName =
+      typeof window !== "undefined" ? localStorage.getItem("storeName") : null;
+
+    if (storeRef) {
+      parts.push(
+        `Magasin actuel : ${sName || "Carrefour"} (ref ${storeRef}) — déjà sélectionné.`
+      );
+    } else {
+      parts.push(
+        "AUCUN magasin sélectionné. Avant toute recherche produit, demande le code postal et utilise list_stores_by_postal_code puis select_store."
+      );
+    }
+
+    if (extension.installed) {
+      parts.push(`Extension VoixCourses installée (version ${extension.version}).`);
+    } else {
+      parts.push(
+        "Extension VoixCourses NON installée. Si l'utilisateur arrive à la finalisation, rappelle-lui qu'il doit installer l'extension sur voixcourses.vercel.app/installer pour que le panier se transfère automatiquement."
+      );
+    }
+
+    if (prefs.diet.length > 0) {
+      parts.push(
+        `Régime alimentaire : ${prefs.diet.join(", ")}. Ajoute systématiquement ces contraintes aux recherches produits (ex: "pâtes sans gluten" au lieu de "pâtes").`
+      );
+    }
+    if (prefs.allergens.length > 0) {
+      parts.push(
+        `Allergènes à éviter : ${prefs.allergens.join(", ")}. Refuse les produits contenant ces ingrédients.`
+      );
+    }
+
+    if (history.lastEntry) {
+      const daysAgo = Math.round(
+        (Date.now() - new Date(history.lastEntry.at).getTime()) /
+          (24 * 60 * 60 * 1000)
+      );
+      parts.push(
+        `Dernière commande il y a ${daysAgo} jour${daysAgo > 1 ? "s" : ""} : ${history.lastEntry.count} produits (${history.lastEntry.total.toFixed(2)}€). Liste : ${history.lastEntry.listText}. Propose de la reprendre si elle est récente (moins de 10 jours).`
+      );
+    } else {
+      parts.push("Aucune commande précédente (premier achat VoixCourses).");
+    }
+
+    return parts.join(" ");
+  }
+
   // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleStart() {
     setError(null);
@@ -234,8 +430,24 @@ function ConversationUI({ setAnnounce, error, setError }: UIProps) {
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
       const { signedUrl } = await res.json();
+
+      const contextText = buildContextText();
+
       await startSession({
         signedUrl,
+        onConnect: () => {
+          // Injection du contexte dès que la session est active — l'agent
+          // reçoit ces infos silencieusement (sans qu'on l'entende) et
+          // adapte son premier message.
+          // Délai court pour laisser le WS se stabiliser.
+          setTimeout(() => {
+            try {
+              sendContextualUpdate(contextText);
+            } catch {
+              /* session peut-être fermée entre-temps */
+            }
+          }, 150);
+        },
         onMessage: (m: { message: string; source: string }) => {
           setMessages((prev) => [
             ...prev,
@@ -308,6 +520,35 @@ function ConversationUI({ setAnnounce, error, setError }: UIProps) {
       </header>
 
       <InstallExtensionBanner />
+
+      {/* Contexte visuel : magasin actuel (si défini), utile pour l'utilisateur
+          voyant, aussi rassurant pour le non-voyant via aria-label */}
+      <div
+        className="flex gap-3 flex-wrap text-sm"
+        aria-label="Contexte actuel"
+      >
+        <span
+          className={`px-3 py-1.5 rounded-lg ${
+            storeName
+              ? "bg-[var(--bg-surface)] border border-[var(--border)]"
+              : "bg-[var(--bg-surface)] border-2 border-[var(--accent)]"
+          }`}
+        >
+          📍{" "}
+          {storeName
+            ? `Magasin : ${storeName}`
+            : "Aucun magasin — l'assistant vous aidera à en choisir un"}
+        </span>
+        {extension.installed ? (
+          <span className="px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--success)] text-[var(--success)]">
+            ✓ Extension OK
+          </span>
+        ) : (
+          <span className="px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--accent)] text-[var(--accent)]">
+            ⚠ Extension absente
+          </span>
+        )}
+      </div>
 
       <section
         aria-label="Contrôle de la conversation"
