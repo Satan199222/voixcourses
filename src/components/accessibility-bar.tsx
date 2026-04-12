@@ -52,22 +52,35 @@ function isTheme(v: string | null): v is Theme {
   return v === "clair" || v === "sombre" || v === "jaune-noir" || v === "blanc-bleu";
 }
 
+/** localStorage.getItem avec garde contre private-browsing / quota. */
+function safeLocalGet(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+/** localStorage.setItem avec garde contre private-browsing / quota. */
+function safeLocalSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (err) {
+    console.warn(`[a11y] localStorage.setItem(${key}) failed:`, err);
+  }
+}
+
 export function AccessibilityBar({
   onVoiceToggle,
   onHelpRequest,
 }: AccessibilityBarProps = {}) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "clair";
-    const saved = localStorage.getItem("voixcourses-theme");
+    const saved = safeLocalGet("voixcourses-theme");
     return isTheme(saved) ? saved : "clair";
   });
   const [fontSize, setFontSize] = useState<string>(() => {
     if (typeof window === "undefined") return "18px";
-    return localStorage.getItem("voixcourses-font-size") || "18px";
+    return safeLocalGet("voixcourses-font-size") || "18px";
   });
   const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("voixcourses-voice-enabled");
+    const saved = safeLocalGet("voixcourses-voice-enabled");
     return saved === null ? true : saved === "true";
   });
 
@@ -85,12 +98,12 @@ export function AccessibilityBar({
     const root = document.documentElement;
     root.classList.remove("theme-sombre", "theme-jaune-noir", "theme-blanc-bleu");
     if (theme !== "clair") root.classList.add(`theme-${theme}`);
-    localStorage.setItem("voixcourses-theme", theme);
+    safeLocalSet("voixcourses-theme", theme);
   }, [theme]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--font-size-base", fontSize);
-    localStorage.setItem("voixcourses-font-size", fontSize);
+    safeLocalSet("voixcourses-font-size", fontSize);
   }, [fontSize]);
 
   function toggleDiet(d: DietaryRestriction) {
@@ -189,7 +202,7 @@ export function AccessibilityBar({
             onClick={() => {
               const next = !voiceEnabled;
               setVoiceEnabled(next);
-              localStorage.setItem("voixcourses-voice-enabled", String(next));
+              safeLocalSet("voixcourses-voice-enabled", String(next));
               onVoiceToggle?.(next);
             }}
             className="px-3 py-1.5 rounded border text-sm font-semibold"

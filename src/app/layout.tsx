@@ -27,9 +27,7 @@ export default function RootLayout({
         >
           Aller au contenu principal
         </a>
-        <main id="main" tabIndex={-1}>
-          {children}
-        </main>
+        {children}
       </body>
     </html>
   );

@@ -64,6 +64,7 @@ export function HeroSection({ onListenDemo }: HeroSectionProps = {}) {
         </div>
 
         <div
+          role="region"
           className="relative p-12 rounded-2xl overflow-hidden"
           style={{ background: "var(--accent-ink)", color: "var(--bg)" }}
           aria-label="Démonstration de Koraly"

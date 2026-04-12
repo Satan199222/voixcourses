@@ -33,7 +33,7 @@ export default function InstallerPage() {
     <>
       <AccessibilityBar />
       <SiteHeader compact />
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main id="main" tabIndex={-1} className="max-w-2xl mx-auto px-4 py-8 space-y-8">
         <header>
           <h1 className="vc-h2 mt-3">Installer l&apos;extension</h1>
           <p className="text-[var(--text-muted)] mt-1 text-base">
@@ -59,7 +59,7 @@ export default function InstallerPage() {
           <AccessibilitySection />
         </>
       )}
-    </div>
+    </main>
       <Footer />
     </>
   );

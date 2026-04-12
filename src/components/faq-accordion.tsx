@@ -47,7 +47,6 @@ export function FaqAccordion() {
           {FAQS.map((f, i) => (
             <details
               key={f.q}
-              role="group"
               className="px-7 py-6 border-b"
               style={{
                 borderColor: "var(--border)",

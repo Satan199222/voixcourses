@@ -777,10 +777,13 @@ function Home() {
 
       <SiteHeader compact />
 
-      <div
+      <main
+        id="main"
+        tabIndex={-1}
         className="max-w-2xl mx-auto px-4 py-8 space-y-8"
         inert={helpOpen}
       >
+        <h1 className="sr-only">Vos courses — VoixCourses</h1>
 
         {/* Indicateur d'étape visuel — complément aux annonces ARIA pour les
             utilisateurs voyants qui veulent situer leur progression. */}
@@ -1033,7 +1036,7 @@ function Home() {
           </button>
         )}
 
-      </div>
+      </main>
       <Footer />
     </>
   );

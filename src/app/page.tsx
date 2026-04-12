@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AccessibilityBar } from "@/components/accessibility-bar";
 import { SiteHeader } from "@/components/site-header";
 import { HeroSection } from "@/components/hero-section";
@@ -23,6 +24,7 @@ import { useDocumentTitle } from "@/lib/useDocumentTitle";
 export default function HomePage() {
   useDocumentTitle("VoixCourses — Vos courses par la voix");
 
+  const router = useRouter();
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
@@ -40,7 +42,9 @@ export default function HomePage() {
     speak(
       "Bonjour, je suis Koraly. Dites-moi ce dont vous avez besoin. " +
         "Par exemple : pommes Golden, lait demi-écrémé, pain complet."
-    ).catch(() => {});
+    ).catch((err) => {
+      console.error("[home] playDemo speak failed:", err);
+    });
   }, [speak]);
 
   useKeyboardShortcuts({
@@ -52,6 +56,7 @@ export default function HomePage() {
   });
 
   // Raccourcis 1/2/3 — accès direct aux modes sans tabuler sur les cartes.
+  // Désactivés quand le dialog d'aide est ouvert.
   useEffect(() => {
     if (typeof window === "undefined") return;
     function handler(e: KeyboardEvent) {
@@ -67,20 +72,20 @@ export default function HomePage() {
       if (e.key === "1") {
         e.preventDefault();
         setAnnouncement("Mode Clavier sélectionné. Chargement…");
-        window.location.href = "/courses";
+        router.push("/courses");
       } else if (e.key === "2") {
         e.preventDefault();
         setAnnouncement("Mode Vocal guidé sélectionné. Chargement…");
-        window.location.href = "/courses?voice=on";
+        router.push("/courses?voice=on");
       } else if (e.key === "3") {
         e.preventDefault();
         setAnnouncement("Mode Conversation sélectionné. Chargement…");
-        window.location.href = "/courses/conversation";
+        router.push("/courses/conversation");
       }
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [helpOpen]);
+  }, [helpOpen, router]);
 
   return (
     <>
@@ -90,14 +95,16 @@ export default function HomePage() {
         onHelpRequest={() => setHelpOpen(true)}
       />
       <SiteHeader />
-      <HeroSection onListenDemo={playDemo} />
-      <TrustStrip />
-      <ModesShowcase />
-      <ManifestoSection />
-      <WalkthroughDialog />
-      <TestimonySection />
-      <FaqAccordion />
-      <FinalCtaSection onListenDemo={playDemo} />
+      <main id="main" tabIndex={-1}>
+        <HeroSection onListenDemo={playDemo} />
+        <TrustStrip />
+        <ModesShowcase />
+        <ManifestoSection />
+        <WalkthroughDialog />
+        <TestimonySection />
+        <FaqAccordion />
+        <FinalCtaSection onListenDemo={playDemo} />
+      </main>
       <Footer />
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>

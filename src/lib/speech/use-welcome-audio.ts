@@ -17,7 +17,11 @@ interface UseWelcomeAudioOptions {
  * la home dans une session donnée. Respecte :
  * - le toggle voix global (voiceEnabled)
  * - sessionStorage pour ne pas rejouer après navigation retour
- * - autoplay policies (si bloqué, échec silencieux)
+ * - autoplay policies (si bloqué, échec silencieux avec console.warn)
+ *
+ * Délai de 600 ms : laisse le navigateur finir le premier rendu et déclencher
+ * une interaction perceptible avant speak(), ce qui améliore la compatibilité
+ * autoplay sur Chrome/Edge (ils exigent une "user gesture" récente).
  */
 export function useWelcomeAudio({ voiceEnabled, speak }: UseWelcomeAudioOptions) {
   const playedRef = useRef(false);
@@ -39,9 +43,15 @@ export function useWelcomeAudio({ voiceEnabled, speak }: UseWelcomeAudioOptions)
     const t = setTimeout(() => {
       speak(GREETING)
         .then(() => {
-          try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* noop */ }
+          try {
+            sessionStorage.setItem(SESSION_KEY, "1");
+          } catch (err) {
+            console.warn("[welcome] sessionStorage.setItem failed:", err);
+          }
         })
-        .catch(() => { /* autoplay bloqué, pas grave */ });
+        .catch((err) => {
+          console.warn("[welcome] autoplay bloqué ou speak échoué:", err);
+        });
     }, 600);
 
     return () => clearTimeout(t);

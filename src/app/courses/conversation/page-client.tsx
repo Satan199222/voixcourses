@@ -72,19 +72,21 @@ export default function ConversationPageClient() {
       <LiveRegion message={announce} />
       {error && <LiveRegion message={error} urgency="assertive" />}
 
-      <ConversationProvider
-        onConnect={() => setAnnounce("Connexion établie, vous pouvez parler.")}
-        onDisconnect={() => setAnnounce("Conversation terminée.")}
-        onError={(m) =>
-          setError(typeof m === "string" ? m : "Erreur de communication")
-        }
-      >
-        <ConversationExperience
-          setAnnounce={setAnnounce}
-          error={error}
-          setError={setError}
-        />
-      </ConversationProvider>
+      <main id="main" tabIndex={-1}>
+        <ConversationProvider
+          onConnect={() => setAnnounce("Connexion établie, vous pouvez parler.")}
+          onDisconnect={() => setAnnounce("Conversation terminée.")}
+          onError={(m) =>
+            setError(typeof m === "string" ? m : "Erreur de communication")
+          }
+        >
+          <ConversationExperience
+            setAnnounce={setAnnounce}
+            error={error}
+            setError={setError}
+          />
+        </ConversationProvider>
+      </main>
 
       <Footer />
     </>
@@ -434,7 +436,9 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
           sendContextualUpdate(
             `Contexte session : magasin=${dynamicVariables.store_name}, extension=${dynamicVariables.extension_installed}, régime=${dynamicVariables.diet}`
           );
-        } catch {}
+        } catch (err) {
+            console.error("[conversation] sendContextualUpdate failed:", err);
+          }
       }, 500);
     } catch (err) {
       setError(

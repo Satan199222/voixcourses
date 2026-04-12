@@ -14,8 +14,10 @@ const STATUS_LABEL: Record<KoralyOrbStatus, string> = {
 };
 
 /**
- * Orbe visuelle animée représentant Koraly. Respiration + 2 ripples concentriques.
- * Respecte prefers-reduced-motion via la règle globale de globals.css.
+ * Orbe visuelle animée représentant Koraly.
+ * - Respiration (vc-breathe) uniquement en états listening et speaking.
+ * - 2 ripples concentriques permanents (vc-ripple) — purement décoratifs.
+ * - Respecte prefers-reduced-motion via la règle globale de globals.css.
  */
 export function KoralyOrb({ status = "idle", size = 180 }: KoralyOrbProps) {
   const breathing = status === "listening" || status === "speaking";
@@ -48,16 +50,20 @@ export function KoralyOrb({ status = "idle", size = 180 }: KoralyOrbProps) {
         }}
       />
       <div
-        role="status"
-        aria-live="polite"
         className="absolute inset-0 flex items-center justify-center text-center"
         style={{ color: "var(--bg)" }}
       >
         <div>
-          <div className="text-xl font-bold" style={{ letterSpacing: "-0.3px" }}>
+          <div
+            className="text-xl font-bold"
+            aria-hidden="true"
+            style={{ letterSpacing: "-0.3px" }}
+          >
             Koraly
           </div>
-          <div className="sr-only">{STATUS_LABEL[status]}</div>
+          <div role="status" aria-live="polite" className="sr-only">
+            {STATUS_LABEL[status]}
+          </div>
         </div>
       </div>
     </div>
