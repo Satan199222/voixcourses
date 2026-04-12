@@ -38,17 +38,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: [
-    "playwright-core",
-    "playwright-extra",
-    "puppeteer-extra-plugin",
-    "puppeteer-extra-plugin-stealth",
-    "@sparticuz/chromium-min",
-    // Deps transitives que Turbopack oublie de traverser sinon :
-    "is-plain-object",
-    "clone-deep",
-    "merge-deep",
-  ],
+  serverExternalPackages: ["playwright-core"],
   turbopack: {
     root: __dirname,
   },

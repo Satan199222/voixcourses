@@ -12,17 +12,9 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@sparticuz/chromium-min": "^147.0.0",
     "ai": "^6.0.158",
-    "clone-deep": "^4.0.1",
-    "impit": "^0.13.0",
-    "is-plain-object": "^5.0.0",
-    "merge-deep": "^3.0.3",
     "next": "16.2.3",
     "playwright-core": "^1.59.1",
-    "playwright-extra": "^4.3.6",
-    "puppeteer-extra-plugin": "^3.2.3",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.3.6"

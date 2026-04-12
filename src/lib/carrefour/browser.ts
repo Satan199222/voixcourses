@@ -5,84 +5,52 @@ let page: Page | null = null;
 let cloudflareReady = false;
 
 /**
- * Charge un navigateur Playwright avec le plugin stealth activé.
+ * Stratégie d'exécution du browser Playwright :
  *
- * Stealth masque les traces automation-specific que Cloudflare renifle pour
- * bloquer les bots : `navigator.webdriver=true`, `chrome.runtime` absent en
- * headless, plugins vides, permissions API inattendues, etc. Indispensable
- * sur IP datacenter (Vercel) où Cloudflare est en mode challenge strict.
+ * 1. Si `BROWSER_WS_ENDPOINT` est défini (prod Vercel) → on se connecte à un
+ *    browser distant géré (ex: Browserless). Avantages : IP résidentielle
+ *    (Cloudflare laisse passer), stealth intégré, zéro binary à bundler,
+ *    cold start rapide.
  *
- * `playwright-extra` et `puppeteer-extra-plugin-stealth` sont loadés
- * dynamiquement pour que le bundle ne charge pas ces deps sur les routes
- * qui n'utilisent pas Carrefour.
+ * 2. Sinon (dev local) → on lance un Chromium local via `executablePath`
+ *    (celui installé par `npx playwright install` ou la variable
+ *    `CHROMIUM_PATH`). Pas d'IP résidentielle mais ça marche pour tester.
  */
-async function getChromium() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playwrightExtra: any = await import("playwright-extra");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stealthMod: any = await import("puppeteer-extra-plugin-stealth");
-  const stealth = stealthMod.default();
-  // Désactiver les evasions qui posent problème en environnement serverless
-  // (iframe.contentWindow se comporte bizarrement dans chromium headless).
-  if (stealth.enabledEvasions instanceof Set) {
-    stealth.enabledEvasions.delete("iframe.contentWindow");
-  }
-  const chromium = playwrightExtra.chromium ?? playwrightExtra.default.chromium;
-  chromium.use(stealth);
-  return chromium;
-}
+async function getBrowser(): Promise<Browser> {
+  if (browser) return browser;
 
-/**
- * URL du pack Brotli de Chromium hébergé sur GitHub Releases.
- *
- * @sparticuz/chromium-min NE bundle PAS le binaire (différence avec
- * `chromium` classique), car il dépasse la limite 50 MB des fonctions Vercel
- * Hobby. À la place, on télécharge le pack.tar au premier cold start,
- * décompressé dans /tmp. Fluid Compute réutilise ensuite l'instance.
- *
- * La MAJOR de cette URL doit matcher la version npm de `@sparticuz/chromium-min`.
- */
-const CHROMIUM_PACK_URL =
-  "https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.x64.tar";
+  const { chromium } = await import("playwright-core");
+  const wsEndpoint = process.env.BROWSER_WS_ENDPOINT;
 
-async function getLaunchOptions() {
-  const isVercel = !!process.env.VERCEL;
-
-  if (isVercel) {
-    const chromium = await import("@sparticuz/chromium-min");
-    return {
-      args: chromium.default.args,
-      executablePath: await chromium.default.executablePath(CHROMIUM_PACK_URL),
-      headless: true,
-    };
+  if (wsEndpoint) {
+    // Browser distant (Browserless ou équivalent) : une simple connexion WS
+    // suffit. Le service de l'autre côté gère Chromium + stealth + IPs.
+    browser = await chromium.connect(wsEndpoint);
+    return browser;
   }
 
+  // Local dev — chemin du Chromium installé par `npx playwright install`
   const localChromium =
     process.env.CHROMIUM_PATH ||
     "/home/julien/.cache/ms-playwright/chromium-1217/chrome-linux/chrome";
 
-  return {
+  browser = await chromium.launch({
     executablePath: localChromium,
     headless: true,
-  };
+  });
+  return browser;
 }
 
 /**
- * Vérifie qu'on est bel et bien sur une page Carrefour et pas sur une
- * page de challenge Cloudflare. Cloudflare retourne une page HTML "Just a
- * moment..." avec des scripts qui posent des cookies de clearance. Si on
- * enchaîne nos requêtes API avant que le challenge soit passé, on reçoit
- * du HTML au lieu de JSON → crash dans res.json().
- *
- * Heuristique : Carrefour place un <meta name="apple-itunes-app"> et a
- * `#__NEXT_DATA__` dans la home. Cloudflare challenge n'a aucun des deux.
+ * Vérifie qu'on est sur une vraie page Carrefour et pas un challenge
+ * Cloudflare. Heuristique : __NEXT_DATA__ (site Carrefour en Next.js) ou
+ * meta apple-itunes-app sont présents sur les vraies pages Carrefour,
+ * absents sur les pages de challenge Cloudflare.
  */
 async function isCarrefourReady(p: Page): Promise<boolean> {
   return p.evaluate(() => {
     const title = document.title || "";
-    // Pages de challenge Cloudflare ont des titres spécifiques
     if (/just a moment|un instant|attacker|checking/i.test(title)) return false;
-    // Carrefour : présence du __NEXT_DATA__ ou du meta apple
     const hasNext = !!document.getElementById("__NEXT_DATA__");
     const hasApple = !!document.querySelector('meta[name="apple-itunes-app"]');
     return hasNext || hasApple;
@@ -98,17 +66,9 @@ export async function getPage(): Promise<Page> {
     return page;
   }
 
-  if (!browser) {
-    const pw = await getChromium();
-    const launchOptions = await getLaunchOptions();
-    browser = (await pw.launch(launchOptions)) as Browser;
-  }
+  const b = await getBrowser();
 
-  // Narrow : browser vient d'être assigné, TS l'a oublié avec l'async.
-  const activeBrowser = browser as Browser;
-  const context = await activeBrowser.newContext({
-    // User agent récent Chrome Linux — plus crédible que la valeur par défaut
-    // de headless-chromium. Cloudflare note cette valeur dans son fingerprint.
+  const context = await b.newContext({
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     locale: "fr-FR",
@@ -119,18 +79,15 @@ export async function getPage(): Promise<Page> {
   });
   page = await context.newPage();
 
-  // Passer Cloudflare : goto + attendre une preuve que Carrefour a rendu la
-  // page, sinon on se retrouve à faire des appels API sur la page challenge
-  // qui retourne du HTML au lieu du JSON attendu.
   await page.goto("https://www.carrefour.fr", {
     waitUntil: "domcontentloaded",
     timeout: 45000,
   });
 
-  // Retry-wait : jusqu'à 20s pour que le challenge passe. On vérifie toutes
-  // les 500ms si Carrefour a rendu son contenu (pas la page Cloudflare).
-  let ready = false;
+  // Retry-wait jusqu'à 20s : si Browserless, le stealth passe souvent sous
+  // 3s ; si local dev, c'est instantané.
   const deadline = Date.now() + 20_000;
+  let ready = false;
   while (Date.now() < deadline) {
     if (await isCarrefourReady(page)) {
       ready = true;
@@ -140,9 +97,7 @@ export async function getPage(): Promise<Page> {
   }
 
   if (!ready) {
-    // On logge mais on continue — certains appels pourraient quand même
-    // passer (cookies déjà posés par Cloudflare avant notre check).
-    console.warn("[carrefour] Cloudflare challenge non confirmé après 20s");
+    console.warn("[carrefour] Page Carrefour pas prête après 20s");
   }
 
   cloudflareReady = true;
@@ -151,9 +106,7 @@ export async function getPage(): Promise<Page> {
 
 /**
  * Exécute un fetch dans le contexte du navigateur (avec session Cloudflare).
- * Protège contre le cas où Carrefour répond en HTML (challenge ou page
- * d'erreur) au lieu du JSON attendu : on detect via le content-type et on
- * throw un message lisible plutôt que la SyntaxError JSON opaque.
+ * Diagnostic explicite si Carrefour répond en HTML (challenge non passé).
  */
 export async function browserFetch<T>(
   path: string,
@@ -177,14 +130,12 @@ export async function browserFetch<T>(
       });
       const contentType = res.headers.get("content-type") || "";
       const text = await res.text();
-      // Si on reçoit du HTML, c'est probablement une page Cloudflare challenge
-      // ou une page d'erreur Carrefour. On throw un message clair pour le log.
       if (
         contentType.includes("text/html") ||
         text.trimStart().startsWith("<")
       ) {
         throw new Error(
-          `Carrefour a répondu en HTML (status ${res.status}) au lieu de JSON. Probable challenge Cloudflare non passé. Path : ${path}`
+          `Carrefour a répondu en HTML (status ${res.status}) au lieu de JSON. Probable challenge Cloudflare. Path : ${path}`
         );
       }
       try {
