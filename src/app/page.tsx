@@ -40,6 +40,10 @@ interface MatchedItem {
   allCandidates: CarrefourProduct[];
   currentIndex: number;
   quantity: number;
+  /** Indique si la recherche est terminée pour cet item. `false` = loading
+   *  (placeholder initial), `true` = Carrefour a répondu (qu'il y ait un
+   *  produit ou non). Évite d'afficher "Aucun résultat" pendant la recherche. */
+  searched: boolean;
 }
 
 /** Convertit un prix en texte prononçable "1 euros 26 centimes". */
@@ -374,6 +378,7 @@ export default function Home() {
       allCandidates: [],
       currentIndex: 0,
       quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
+      searched: false,
     }));
     setMatchedItems(placeholders);
     setIsLoading(false);
@@ -412,6 +417,7 @@ export default function Home() {
               alternatives: candidates.slice(1),
               allCandidates: candidates,
               currentIndex: 0,
+              searched: true,
             };
             return next;
           });
@@ -422,7 +428,15 @@ export default function Home() {
             announce(`${found} produit${found > 1 ? "s" : ""} trouvé${found > 1 ? "s" : ""} sur ${items.length}.`);
           }
         } catch {
-          // Item marqué "aucun résultat" — déjà le placeholder par défaut
+          // Erreur réseau / API : on marque searched=true pour basculer
+          // l'UI en "aucun résultat" (au lieu de rester en "loading").
+          setMatchedItems((prev) => {
+            const next = [...prev];
+            if (next[index]) {
+              next[index] = { ...next[index], searched: true };
+            }
+            return next;
+          });
         }
       })
     );
@@ -625,6 +639,7 @@ export default function Home() {
           allCandidates: candidates,
           currentIndex: 0,
           quantity: 1,
+          searched: true,
         },
       ]);
       setAddQuery("");

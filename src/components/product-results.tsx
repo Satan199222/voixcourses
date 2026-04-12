@@ -11,6 +11,8 @@ interface ProductResultsProps {
     allCandidates: CarrefourProduct[];
     currentIndex: number;
     quantity: number;
+    /** false pendant la recherche, true quand l'API a répondu (même vide). */
+    searched: boolean;
   }[];
   onConfirm: (ean: string) => void;
   onReject: (query: string) => void;
@@ -47,6 +49,32 @@ export const ProductResults = forwardRef<HTMLDivElement, ProductResultsProps>(
             const titleId = `product-title-${index}`;
 
             if (!p) {
+              // Pendant la recherche : état "loading" visuel + annonce SR
+              // distincte de "aucun résultat". Ne montre PAS le bouton Retirer
+              // tant que la recherche n'est pas finie (l'utilisateur pourrait
+              // retirer un item qui allait se résoudre dans 2s).
+              if (!item.searched) {
+                return (
+                  <li
+                    key={item.query}
+                    aria-busy="true"
+                    aria-label={`Recherche en cours pour ${item.query}`}
+                    className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)] opacity-80"
+                  >
+                    <p id={titleId} className="flex items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="inline-block w-3 h-3 rounded-full bg-[var(--accent)] animate-pulse"
+                      />
+                      <span>
+                        Recherche en cours pour <strong>{item.query}</strong>…
+                      </span>
+                    </p>
+                  </li>
+                );
+              }
+
+              // Recherche terminée, vraiment aucun résultat
               return (
                 <li
                   key={item.query}
