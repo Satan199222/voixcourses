@@ -3,22 +3,38 @@
  *
  * Pourquoi ScrapFly : Cloudflare Managed Challenge bloque les IPs datacenter
  * (Vercel, Browserless free, etc.). ScrapFly intègre un "Anti-Scraping
- * Protection" (`asp=true`) qui résout Cloudflare automatiquement — c'est
- * leur cœur métier.
+ * Protection" (`asp=true`) qui résout Cloudflare en natif.
  *
- * API ScrapFly : un simple GET vers `https://api.scrapfly.io/scrape` avec la
- * URL cible en paramètre. On récupère un JSON wrapper contenant la réponse
- * Carrefour sous `result.content`.
+ * Stratégie deux-temps (validée empiriquement) :
+ * 1. **Warmup session** : GET `/` avec `render_js=true` → résout le challenge
+ *    JS Cloudflare, pose les cookies `cf_clearance` dans la session (30 min).
+ *    Coût : ~80 credits (une fois par instance Vercel + renouvelé toutes les
+ *    25 min).
+ * 2. **Calls API** dans la même session avec `asp=true` mais `render_js=false`
+ *    → Carrefour honore `x-requested-with` et répond en JSON.
+ *    Coût : ~40 credits par call.
  *
- * Sessions : pour que le cookie de magasin sélectionné (`set-store`) persiste
- * entre les appels, ScrapFly propose un paramètre `session` qui partage les
- * cookies jusqu'à 30 min. Sans session persistante, chaque call repartirait
- * de zéro.
+ * Sans warmup, Carrefour retourne du HTML (ignore `x-requested-with` sur les
+ * requêtes non-authentifiées par cf_clearance).
+ *
+ * Format headers critique : ScrapFly attend `headers[name]=value` (bracket
+ * notation PHP-style), PAS un JSON stringifié.
  */
 
-/** Budget ScrapFly : chaque scrape ASP coûte ~5 credits. Free tier = 1000/mois. */
 const SCRAPFLY_ENDPOINT = "https://api.scrapfly.io/scrape";
 const CARREFOUR_ORIGIN = "https://www.carrefour.fr";
+
+/** Session globale partagée par l'instance Fluid Compute.
+ *  Réutilisée entre requêtes pour amortir le coût du warmup (80 cr) sur
+ *  plusieurs user calls. */
+const GLOBAL_SESSION = "voixcourses-main";
+/** Durée de vie cookies Cloudflare — on re-warmup avant expiration. */
+const SESSION_LIFETIME_MS = 25 * 60 * 1000; // 25 min (marge de 5 min)
+
+// Map session → last warmup timestamp. Partagée entre requêtes d'une instance
+// Fluid Compute. Si plusieurs sessions (multi-store), on tracke chacune.
+// @ts-expect-error globalThis augment pour réutilisation entre requêtes
+const warmupCache: Map<string, number> = (globalThis.__vc_warmup ??= new Map());
 
 interface ScrapflyOptions {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
@@ -26,34 +42,39 @@ interface ScrapflyOptions {
   headers?: Record<string, string>;
   /** Session partagée (même user, même magasin) pour préserver cookies. */
   session?: string;
-  /** Activer le rendu JS (plus coûteux, nécessaire pour scraper du HTML
-   *  dynamique). Défaut : false — les endpoints /api/* retournent du JSON
-   *  directement, pas besoin. */
+  /** Force render_js=true (scraper HTML avec exécution JS). Coûte +5 credits. */
   renderJs?: boolean;
 }
 
 interface ScrapflyResponse {
-  result: {
+  result?: {
     content: string;
     content_format: string;
+    content_type?: string;
     status_code: number;
     success: boolean;
     error?: { code: string; message: string } | null;
     url: string;
   };
-  context?: unknown;
+  context?: {
+    cost?: { total?: number };
+  };
 }
 
 /**
- * Execute une requête vers carrefour.fr via ScrapFly.
- *
- * Le path commence par `/` (ex: `/s?q=lait` ou `/api/cart`) — on l'ajoute
- * sur CARREFOUR_ORIGIN automatiquement.
+ * Construit l'URL ScrapFly avec bracket notation pour les headers.
+ * `URLSearchParams` ne supporte pas les [] dans les clés → construction manuelle.
  */
-export async function scrapflyFetch<T>(
-  path: string,
-  options: ScrapflyOptions = {}
-): Promise<T> {
+function buildScrapflyUrl(params: {
+  targetUrl: string;
+  asp: boolean;
+  renderJs: boolean;
+  session?: string;
+  method?: string;
+  body?: string;
+  forwardHeaders?: Record<string, string>;
+  waitForSelector?: string;
+}): string {
   const apiKey = process.env.SCRAPFLY_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -61,11 +82,85 @@ export async function scrapflyFetch<T>(
     );
   }
 
+  const parts: string[] = [
+    `key=${encodeURIComponent(apiKey)}`,
+    `url=${encodeURIComponent(params.targetUrl)}`,
+    `country=fr`,
+  ];
+  if (params.asp) parts.push("asp=true");
+  if (params.renderJs) parts.push("render_js=true");
+  if (params.session) {
+    parts.push(`session=${encodeURIComponent(params.session)}`);
+    parts.push("session_sticky_proxy=true");
+  }
+  if (params.waitForSelector) {
+    parts.push(`wait_for_selector=${encodeURIComponent(params.waitForSelector)}`);
+  }
+  if (params.method && params.method !== "GET") {
+    parts.push(`method=${params.method}`);
+  }
+  if (params.body) {
+    parts.push(`body=${encodeURIComponent(params.body)}`);
+  }
+  // Bracket notation : headers[name]=value (ScrapFly spec)
+  if (params.forwardHeaders) {
+    for (const [name, value] of Object.entries(params.forwardHeaders)) {
+      parts.push(`headers[${encodeURIComponent(name)}]=${encodeURIComponent(value)}`);
+    }
+  }
+  return `${SCRAPFLY_ENDPOINT}?${parts.join("&")}`;
+}
+
+/**
+ * Résout le challenge Cloudflare pour cette session. Idempotent : n'exécute
+ * le warmup que si la session est expirée ou jamais initialisée.
+ */
+async function ensureWarmup(session: string): Promise<void> {
+  const last = warmupCache.get(session);
+  const now = Date.now();
+  if (last && now - last < SESSION_LIFETIME_MS) {
+    return; // session toujours valide, skip warmup
+  }
+
+  const url = buildScrapflyUrl({
+    targetUrl: `${CARREFOUR_ORIGIN}/`,
+    asp: true,
+    renderJs: true,
+    session,
+  });
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(
+      `ScrapFly warmup HTTP ${res.status} : ${err.slice(0, 200)}`
+    );
+  }
+  const wrapper = (await res.json()) as ScrapflyResponse;
+  if (!wrapper.result?.success) {
+    throw new Error(
+      `ScrapFly warmup failed : ${wrapper.result?.error?.message ?? "inconnu"}`
+    );
+  }
+  warmupCache.set(session, now);
+}
+
+/**
+ * Execute une requête vers carrefour.fr via ScrapFly.
+ * Garantit qu'un warmup Cloudflare a été fait dans la session avant le call.
+ */
+export async function scrapflyFetch<T>(
+  path: string,
+  options: ScrapflyOptions = {}
+): Promise<T> {
+  const session = options.session ?? GLOBAL_SESSION;
+
+  // Warmup si nécessaire (n'a lieu que si session expirée)
+  await ensureWarmup(session);
+
   const targetUrl = path.startsWith("http") ? path : `${CARREFOUR_ORIGIN}${path}`;
 
-  // Headers à forwarder à Carrefour. `x-requested-with: XMLHttpRequest` est
-  // critique : sans lui, Carrefour retourne du HTML au lieu du JSON (voir
-  // docs/CARREFOUR-API.md). On ajoute `referer` pour le profil crédible.
+  // `x-requested-with: XMLHttpRequest` est CRITIQUE : sans lui, Carrefour
+  // retourne du HTML au lieu du JSON, même avec Cloudflare passé.
   const forwardHeaders: Record<string, string> = {
     "x-requested-with": "XMLHttpRequest",
     accept: "application/json",
@@ -73,59 +168,47 @@ export async function scrapflyFetch<T>(
     ...options.headers,
   };
 
-  const params = new URLSearchParams({
-    key: apiKey,
-    url: targetUrl,
-    asp: "true", // Anti-Scraping Protection : bypass Cloudflare
-    country: "fr", // IP résidentielle française (Cloudflare plus permissif)
-    render_js: options.renderJs ? "true" : "false",
-    // Headers forwarded : ScrapFly prend un objet JSON URL-encodé
-    headers: JSON.stringify(forwardHeaders),
+  const url = buildScrapflyUrl({
+    targetUrl,
+    asp: true,
+    renderJs: options.renderJs ?? false,
+    session,
+    method: options.method,
+    body: options.body,
+    forwardHeaders,
   });
 
-  if (options.session) {
-    params.set("session", options.session);
-    // Conserver les cookies entre les appels de la même session
-    params.set("session_sticky_proxy", "true");
-  }
-
-  if (options.method && options.method !== "GET") {
-    params.set("method", options.method);
-  }
-
-  if (options.body) {
-    params.set("body", options.body);
-  }
-
-  const res = await fetch(`${SCRAPFLY_ENDPOINT}?${params}`);
+  const res = await fetch(url);
 
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
     throw new Error(
-      `ScrapFly HTTP ${res.status} : ${errText.slice(0, 200)}`
+      `ScrapFly HTTP ${res.status} : ${errText.slice(0, 300)}`
     );
   }
 
   const wrapper = (await res.json()) as ScrapflyResponse;
 
-  if (!wrapper.result.success) {
+  if (!wrapper.result?.success) {
     throw new Error(
-      `ScrapFly échec : ${wrapper.result.error?.message ?? "inconnu"}`
+      `ScrapFly échec : ${wrapper.result?.error?.message ?? "inconnu"}`
     );
   }
 
   const status = wrapper.result.status_code;
   const content = wrapper.result.content;
+  const contentType = wrapper.result.content_type || "";
 
-  // Diagnostic : si Carrefour nous a renvoyé du HTML malgré l'ASP, c'est
-  // probablement que notre requête est mal formée (URL, headers). On throw
-  // un message clair plutôt qu'un JSON.parse qui échoue.
+  // Diagnostic clair si Carrefour retourne du HTML (challenge non résolu,
+  // session expirée pendant la requête, ou endpoint servant du HTML).
   if (
-    wrapper.result.content_format === "html" ||
+    contentType.includes("text/html") ||
     content.trimStart().startsWith("<")
   ) {
+    // Invalidate la session pour forcer un re-warmup au prochain call
+    warmupCache.delete(session);
     throw new Error(
-      `Carrefour a répondu en HTML (status ${status}) malgré ASP. Path : ${path}`
+      `Carrefour a répondu en HTML (status ${status}) malgré ASP. Path : ${path}. Session invalidée.`
     );
   }
 
@@ -146,49 +229,40 @@ export async function scrapflyFetch<T>(
 
 /**
  * Récupère du HTML brut (pour scraper le basketServiceId d'une fiche produit).
- * Active `renderJs=true` — Carrefour fait du SSR Next.js, mais certains
- * éléments (scripts tracking, ids dynamiques) nécessitent l'exécution JS.
+ * Active `render_js=true` — nécessite que la page s'hydrate côté client.
  */
 export async function scrapflyFetchHtml(
   path: string,
   options: Omit<ScrapflyOptions, "renderJs"> = {}
 ): Promise<string> {
-  const apiKey = process.env.SCRAPFLY_API_KEY;
-  if (!apiKey) {
-    throw new Error("SCRAPFLY_API_KEY manquant.");
-  }
+  const session = options.session ?? GLOBAL_SESSION;
+  await ensureWarmup(session);
 
   const targetUrl = path.startsWith("http") ? path : `${CARREFOUR_ORIGIN}${path}`;
-  const params = new URLSearchParams({
-    key: apiKey,
-    url: targetUrl,
-    asp: "true",
-    country: "fr",
-    render_js: "true",
-    wait_for_selector: "body", // attend que la page soit chargée
+  const url = buildScrapflyUrl({
+    targetUrl,
+    asp: true,
+    renderJs: true,
+    session,
+    waitForSelector: "body",
   });
 
-  if (options.session) {
-    params.set("session", options.session);
-  }
-
-  const res = await fetch(`${SCRAPFLY_ENDPOINT}?${params}`);
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`ScrapFly HTTP ${res.status}`);
   }
   const wrapper = (await res.json()) as ScrapflyResponse;
-  if (!wrapper.result.success) {
+  if (!wrapper.result?.success) {
     throw new Error(
-      `ScrapFly HTML échec : ${wrapper.result.error?.message ?? "inconnu"}`
+      `ScrapFly HTML échec : ${wrapper.result?.error?.message ?? "inconnu"}`
     );
   }
   return wrapper.result.content;
 }
 
 /**
- * Nom de session ScrapFly stable pour un magasin donné.
- * Permet que set-store + search + cart partagent les cookies Cloudflare +
- * magasin sélectionné. Durée : 30 min (ScrapFly default).
+ * Nom de session ScrapFly stable pour un magasin donné. Préserve cookies
+ * set-store entre search/cart/slots.
  */
 export function sessionForStore(storeRef: string): string {
   return `voixcourses-${storeRef}`;
