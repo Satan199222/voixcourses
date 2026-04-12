@@ -33,14 +33,33 @@
     },
 
     normalize(text) {
-      return (text || "")
-        .replace(/(\d+)[.,](\d{2})\s*€/g, "$1 euros $2 centimes")
-        .replace(/(\d+)\s*€/g, "$1 euros")
-        .replace(/(\d+(?:[.,]\d+)?)\s*L\b/g, "$1 litres")
-        .replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi, "$1 kilogrammes")
-        .replace(/(\d+(?:[.,]\d+)?)\s*g\b/g, "$1 grammes")
-        .replace(/(\d+)\s*cl\b/g, "$1 centilitres")
-        .replace(/(\d+)\s*ml\b/g, "$1 millilitres");
+      return (
+        (text || "")
+          // Prix par unité : "1,26 € / KG" → "1 euros 26 centimes par kilogramme"
+          // Traiter AVANT le simple "€" pour que le "/ KG" qui suit soit capté
+          .replace(
+            /(\d+)[.,](\d{2})\s*€\s*\/\s*KG\b/gi,
+            "$1 euros $2 centimes par kilogramme"
+          )
+          .replace(/(\d+)\s*€\s*\/\s*KG\b/gi, "$1 euros par kilogramme")
+          .replace(
+            /(\d+)[.,](\d{2})\s*€\s*\/\s*L\b/g,
+            "$1 euros $2 centimes par litre"
+          )
+          .replace(/(\d+)\s*€\s*\/\s*L\b/g, "$1 euros par litre")
+          // Prix simples
+          .replace(/(\d+)[.,](\d{2})\s*€/g, "$1 euros $2 centimes")
+          .replace(/(\d+)\s*€/g, "$1 euros")
+          // Unités isolées avec quantité
+          .replace(/(\d+(?:[.,]\d+)?)\s*L\b/g, "$1 litres")
+          .replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi, "$1 kilogrammes")
+          .replace(/(\d+(?:[.,]\d+)?)\s*g\b/g, "$1 grammes")
+          .replace(/(\d+)\s*cl\b/g, "$1 centilitres")
+          .replace(/(\d+)\s*ml\b/g, "$1 millilitres")
+          // "par L" / "par kg" isolés (sans prix)
+          .replace(/\bpar\s+KG\b/gi, "par kilogramme")
+          .replace(/\bpar\s+L\b/g, "par litre")
+      );
     },
 
     speak(text, options) {

@@ -23,7 +23,12 @@ type Step = "store" | "input" | "clarification" | "results" | "cart";
 interface MatchedItem {
   query: string;
   product: CarrefourProduct | null;
+  /** Prochaines alternatives à proposer (FIFO) */
   alternatives: CarrefourProduct[];
+  /** Tous les candidats initiaux pour pouvoir boucler */
+  allCandidates: CarrefourProduct[];
+  /** Index du produit actuel dans allCandidates (pour annoncer "1 sur 4") */
+  currentIndex: number;
 }
 
 export default function Home() {
@@ -182,13 +187,23 @@ export default function Home() {
             );
             const searchData = await searchRes.json();
             const products: CarrefourProduct[] = searchData.products || [];
+            // Garde jusqu'à 5 candidats : 1 principal + 4 alternatives
+            const candidates = products.slice(0, 5);
             return {
               query: item.query,
-              product: products[0] ?? null,
-              alternatives: products.slice(1, 4),
+              product: candidates[0] ?? null,
+              alternatives: candidates.slice(1),
+              allCandidates: candidates,
+              currentIndex: 0,
             };
           } catch {
-            return { query: item.query, product: null, alternatives: [] };
+            return {
+              query: item.query,
+              product: null,
+              alternatives: [],
+              allCandidates: [],
+              currentIndex: 0,
+            };
           }
         })
       );
@@ -220,16 +235,37 @@ export default function Home() {
   function handleReject(query: string) {
     setMatchedItems((prev) =>
       prev.map((item) => {
-        if (item.query === query && item.alternatives.length > 0) {
-          const [next, ...rest] = item.alternatives;
-          announce(`Nouveau choix : ${next.title}, ${next.price?.toFixed(2) ?? "?"} euros.`);
-          return { ...item, product: next, alternatives: rest };
+        if (item.query !== query) return item;
+
+        const total = item.allCandidates.length;
+        if (total <= 1) {
+          // Pas de vraie alternative disponible
+          announce(`Pas d'autre choix disponible pour ${query}.`);
+          return item;
         }
-        if (item.query === query && item.alternatives.length === 0) {
-          announce(`Aucune alternative pour ${query}.`);
-          return { ...item, product: null };
-        }
-        return item;
+
+        // Avancer dans la liste des candidats, avec boucle
+        const nextIndex = (item.currentIndex + 1) % total;
+        const next = item.allCandidates[nextIndex];
+        const looped = nextIndex === 0;
+
+        const priceText = `${next.price?.toFixed(2) ?? "?"} euros`;
+        announce(
+          looped
+            ? `Retour au premier choix. ${next.title}, ${priceText}.`
+            : `Choix ${nextIndex + 1} sur ${total}. ${next.title}, ${priceText}.`
+        );
+
+        return {
+          ...item,
+          product: next,
+          currentIndex: nextIndex,
+          // Recalculer les alternatives restantes (pour l'UI si elle les affiche)
+          alternatives: [
+            ...item.allCandidates.slice(nextIndex + 1),
+            ...item.allCandidates.slice(0, nextIndex),
+          ],
+        };
       })
     );
   }
@@ -264,12 +300,15 @@ export default function Home() {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       const products: CarrefourProduct[] = data.products || [];
+      const candidates = products.slice(0, 5);
       setMatchedItems((prev) => [
         ...prev,
         {
           query: q,
-          product: products[0] ?? null,
-          alternatives: products.slice(1, 4),
+          product: candidates[0] ?? null,
+          alternatives: candidates.slice(1),
+          allCandidates: candidates,
+          currentIndex: 0,
         },
       ]);
       setAddQuery("");

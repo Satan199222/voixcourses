@@ -34,8 +34,12 @@ export function GroceryInput({
         Votre liste de courses
       </label>
       <p id="grocery-help" className="text-sm text-[var(--text-muted)]">
-        Tapez ou dictez vos produits. Exemple : 2 litres de lait, des pâtes, 6
-        yaourts nature
+        Dictez ou tapez votre liste naturellement, comme si vous la disiez à
+        quelqu'un. Les mots inutiles (du, de la, quelques) seront ignorés
+        automatiquement. Soyez précis sur le type et la quantité pour éviter
+        les questions ensuite — par exemple "2 litres de lait demi-écrémé"
+        plutôt que "du lait". Vous pourrez ajouter, remplacer ou ajuster la
+        quantité de chaque produit après la recherche.
       </p>
       <textarea
         id="grocery-list"

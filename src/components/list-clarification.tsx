@@ -33,10 +33,15 @@ export function ListClarification({
               : item.status === "ambiguous"
                 ? "à préciser"
                 : "incompris";
-          // aria-label complet pour les items CLEAR (pas d'action possible,
-          // juste de l'info) — pour que le SR annonce "1 sur 5, lait demi-écrémé,
-          // validé, recherche : lait demi ecreme"
-          const clearItemLabel = `Article ${index + 1} sur ${items.length}, ${item.originalText}, ${statusLabel}${item.status === "clear" ? `, recherche : ${item.query}` : ""}`;
+          // Normaliser pour dédupliquer (ex: "2l de lait" vs "2L de lait")
+          const normalizedOriginal = item.originalText.trim().toLowerCase();
+          const normalizedQuery = (item.query || "").trim().toLowerCase();
+          // Ne dire "recherche : X" que si la query diffère vraiment du texte original
+          const showQuery =
+            item.status === "clear" &&
+            item.query &&
+            normalizedQuery !== normalizedOriginal;
+          const clearItemLabel = `Article ${index + 1} sur ${items.length}, ${item.originalText}, ${statusLabel}${showQuery ? `, recherche : ${item.query}` : ""}`;
 
           return (
             <li
@@ -71,7 +76,7 @@ export function ListClarification({
                 </span>
                 <div className="flex-1">
                   <div className="font-semibold">{item.originalText}</div>
-                  {item.status === "clear" && (
+                  {showQuery && (
                     <div className="text-sm text-[var(--text-muted)]">
                       Recherche : {item.query}
                     </div>
