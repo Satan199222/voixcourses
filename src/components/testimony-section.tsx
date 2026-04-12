@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function TestimonySection() {
   return (
     <section
@@ -29,15 +31,21 @@ export function TestimonySection() {
             Non-voyante depuis 12 ans · Strasbourg
           </cite>
         </div>
-        <div
-          aria-hidden="true"
-          className="aspect-[4/5] rounded-xl flex items-end p-6 text-sm"
-          style={{
-            background: "linear-gradient(135deg, #2A4F7E 0%, var(--brass) 120%)",
-            color: "var(--text-on-ink)",
-          }}
-        >
-          📸 Photo authentique — femme 60+ en cuisine
+
+        <div className="relative aspect-[4/5] rounded-xl overflow-hidden">
+          <Image
+            src="/images/femme-cuisine.jpg"
+            alt="Femme utilisant VoixCourses dans sa cuisine"
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to top, rgba(13,27,42,0.5) 0%, transparent 50%)",
+            }}
+          />
         </div>
       </div>
     </section>
