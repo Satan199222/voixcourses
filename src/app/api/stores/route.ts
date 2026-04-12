@@ -11,36 +11,57 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "postalCode requis" }, { status: 400 });
   }
 
-  const geoRes = await fetch(
-    `https://api.woosmap.com/localities/autocomplete/?key=woos-26fe76aa-ff24-3255-b25b-e1bde7b7a683&input=${postalCode}&components=country:fr`,
-    {
-      headers: {
-        origin: "https://www.carrefour.fr",
-        referer: "https://www.carrefour.fr/",
-      },
+  try {
+    const geoRes = await fetch(
+      `https://api.woosmap.com/localities/autocomplete/?key=woos-26fe76aa-ff24-3255-b25b-e1bde7b7a683&input=${postalCode}&components=country:fr`,
+      {
+        headers: {
+          origin: "https://www.carrefour.fr",
+          referer: "https://www.carrefour.fr/",
+        },
+      }
+    );
+    const geoData = await geoRes.json();
+    const location = geoData.localities?.[0]?.location;
+    if (!location) {
+      return NextResponse.json(
+        { error: "Code postal introuvable" },
+        { status: 404 }
+      );
     }
-  );
-  const geoData = await geoRes.json();
-  const location = geoData.localities?.[0]?.location;
-  if (!location) {
+
+    const stores = await findStores(location.lat, location.lng, postalCode);
+    return NextResponse.json({ stores, location });
+  } catch (err) {
+    console.error("[stores] GET failed:", err);
     return NextResponse.json(
-      { error: "Code postal introuvable" },
-      { status: 404 }
+      { error: "Recherche des magasins impossible." },
+      { status: 502 }
     );
   }
-
-  const stores = await findStores(location.lat, location.lng, postalCode);
-  return NextResponse.json({ stores, location });
 }
 
 export async function POST(request: NextRequest) {
-  const { storeRef } = await request.json();
-  if (!storeRef) {
+  let body: { storeRef?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corps JSON invalide" }, { status: 400 });
+  }
+
+  if (!body.storeRef) {
     return NextResponse.json({ error: "storeRef requis" }, { status: 400 });
   }
 
-  await setStore(storeRef);
-  const basketServiceId = await getBasketServiceId(storeRef);
-
-  return NextResponse.json({ ok: true, basketServiceId });
+  try {
+    await setStore(body.storeRef);
+    const basketServiceId = await getBasketServiceId(body.storeRef);
+    return NextResponse.json({ ok: true, basketServiceId });
+  } catch (err) {
+    console.error("[stores] POST failed:", err);
+    return NextResponse.json(
+      { error: "Sélection du magasin impossible." },
+      { status: 502 }
+    );
+  }
 }

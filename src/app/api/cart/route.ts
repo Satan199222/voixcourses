@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCart, addToCart } from "@/lib/carrefour/client";
 
 export async function GET() {
-  const cart = await getCart();
-  return NextResponse.json(cart);
+  try {
+    const cart = await getCart();
+    return NextResponse.json(cart);
+  } catch (err) {
+    console.error("[cart] GET failed:", err);
+    return NextResponse.json(
+      { error: "Impossible de lire le panier." },
+      { status: 502 }
+    );
+  }
 }
 
 export async function PATCH(request: NextRequest) {
-  const { ean, basketServiceId, quantity } = await request.json();
+  let body: { ean?: string; basketServiceId?: string; quantity?: number };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corps JSON invalide" }, { status: 400 });
+  }
+
+  const { ean, basketServiceId, quantity } = body;
   if (!ean || !basketServiceId) {
     return NextResponse.json(
       { error: "ean et basketServiceId requis" },
@@ -15,6 +30,14 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const cart = await addToCart(ean, basketServiceId, quantity ?? 1);
-  return NextResponse.json(cart);
+  try {
+    const cart = await addToCart(ean, basketServiceId, quantity ?? 1);
+    return NextResponse.json(cart);
+  } catch (err) {
+    console.error("[cart] PATCH failed:", err);
+    return NextResponse.json(
+      { error: "Ajout au panier impossible. Veuillez réessayer." },
+      { status: 502 }
+    );
+  }
 }

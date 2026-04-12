@@ -16,7 +16,9 @@
   --success: #2ee8a5;
   --border: #2b3a55;
   --focus-ring: #ffd166;
-  --font-size-base: 1.125rem;
+  --font-size-base: 1.3rem;
+  --shadow-lg: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.35);
 }
 
 /* Thème clair — fond blanc, contraste AAA */
@@ -35,14 +37,13 @@
 
 /* Thème contraste élevé — jaune sur noir.
    Pattern préféré par les utilisateurs avec DMLA (dégénérescence maculaire) :
-   meilleur ratio de luminance que blanc/noir, moins de glare que pur blanc.
-   Réf : Smashing Magazine "Inclusive Dark Mode" 2025. */
+   meilleur ratio de luminance que blanc/noir, moins de glare que pur blanc. */
 :root.theme-high-contrast, body.theme-high-contrast {
   --bg: #000000;
   --bg-surface: #0a0a0a;
-  --text: #ffff00;       /* jaune vif sur noir — contraste maximum perçu */
+  --text: #ffff00;
   --text-muted: #cccc00;
-  --accent: #ffffff;     /* CTA en blanc sur noir */
+  --accent: #ffffff;
   --accent-hover: #ffff66;
   --danger: #ff6666;
   --success: #66ff66;
@@ -64,12 +65,47 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   transition: background 0.2s, color 0.2s;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at top left, color-mix(in oklab, var(--accent) 6%, transparent), transparent 60%),
+    radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--accent) 4%, transparent), transparent 55%);
 }
 
-/* Focus visible AAA — 3px ring bien contrasté */
+/* Dégradé décoratif retiré si l'utilisateur demande high-contrast ou reduced-motion */
+@media (prefers-contrast: more) {
+  body { background-image: none; }
+}
+:root.theme-high-contrast body { background-image: none; }
+
+/* Focus visible AAA — ring épais + outline solide en doublon.
+   Le double effet garantit la visibilité même si un des deux est supprimé
+   par un reset CSS tiers ou un thème browser particulier.
+   4px minimum recommandé par WCAG 2.2 § 2.4.11 (Focus Appearance). */
 :focus-visible {
-  outline: 3px solid var(--focus-ring);
+  outline: 4px solid var(--focus-ring);
   outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Cibles utilisateur avec troubles cognitifs ou motricité réduite qui
+   utilisent un pointeur : le focus doit aussi être très visible au hover/focus
+   simultané. */
+@media (prefers-contrast: more) {
+  :root {
+    --bg: #000000;
+    --bg-surface: #0a0a0a;
+    --text: #ffffff;
+    --text-muted: #dddddd;
+    --accent: #ffff00;
+    --accent-hover: #ffff66;
+    --border: #ffffff;
+    --focus-ring: #ffff00;
+  }
+
+  :focus-visible {
+    outline-width: 6px;
+    outline-offset: 4px;
+  }
 }
 
 ::selection {
@@ -77,13 +113,7 @@ body {
   color: var(--bg);
 }
 
-/* Note : on NE respecte PAS automatiquement prefers-color-scheme car
-   certains utilisateurs aveugles ont leur OS en clair par défaut mais
-   préfèrent le thème sombre de l'app (meilleur contraste pour le peu de
-   vue qu'ils ont). L'utilisateur choisit explicitement son thème. */
-
-/* Windows High Contrast Mode — utiliser les system colors plutôt que les nôtres.
-   Ne pas redesigner, juste ajuster ce qui ne fonctionnerait pas. */
+/* Windows High Contrast Mode — utiliser les system colors plutôt que les nôtres. */
 @media (forced-colors: active) {
   :root {
     --bg: Canvas;
@@ -107,15 +137,23 @@ body {
   select {
     border: 2px solid ButtonBorder !important;
   }
+
+  :focus-visible {
+    outline: 4px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
-/* Respecter prefers-reduced-motion */
+/* Respecter prefers-reduced-motion — utilisateurs avec vertiges, TDAH,
+   ou simplement qui n'aiment pas les animations. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -130,4 +168,11 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Placeholder visible (contrast accessible) — par défaut les placeholders
+   sont rendus en gris clair qui peut tomber sous 3:1 dans certains thèmes. */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1; /* Firefox baisse à 0.5 par défaut */
 }

@@ -7,6 +7,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "storeRef requis" }, { status: 400 });
   }
 
-  const slot = await getFirstSlot(storeRef);
-  return NextResponse.json({ slot });
+  try {
+    const slot = await getFirstSlot(storeRef);
+    return NextResponse.json({ slot });
+  } catch (err) {
+    console.error("[slots] getFirstSlot failed:", err);
+    return NextResponse.json(
+      { error: "Lecture du créneau impossible.", slot: null },
+      { status: 502 }
+    );
+  }
 }

@@ -2,6 +2,11 @@
 
 import { useEffect } from "react";
 
+interface FocusAnnounceOptions {
+  rate?: number;
+  lang?: string;
+}
+
 /**
  * Annonce vocale au focus.
  *
@@ -18,7 +23,12 @@ import { useEffect } from "react";
  * Note : ce hook est OPT-IN. Il est désactivé par défaut pour ne pas
  * interférer avec les lecteurs d'écran (qui font déjà ce travail).
  */
-export function useFocusAnnounce(enabled: boolean) {
+export function useFocusAnnounce(
+  enabled: boolean,
+  options: FocusAnnounceOptions = {}
+) {
+  const { rate = 1.1, lang = "fr-FR" } = options;
+
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
 
@@ -64,13 +74,15 @@ export function useFocusAnnounce(enabled: boolean) {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(cleaned);
-      utterance.lang = "fr-FR";
-      utterance.rate = 1.1;
+      utterance.lang = lang;
+      utterance.rate = rate;
 
-      // Préférer une voix française si disponible
+      // Préférer une voix du pays demandé, sinon n'importe quelle voix française
       const voices = window.speechSynthesis.getVoices();
-      const frenchVoice = voices.find((v) => v.lang.startsWith("fr"));
-      if (frenchVoice) utterance.voice = frenchVoice;
+      const exactVoice = voices.find((v) => v.lang === lang);
+      const anyFrenchVoice = voices.find((v) => v.lang.startsWith("fr"));
+      const picked = exactVoice ?? anyFrenchVoice;
+      if (picked) utterance.voice = picked;
 
       window.speechSynthesis.speak(utterance);
     }
@@ -120,5 +132,5 @@ export function useFocusAnnounce(enabled: boolean) {
         window.speechSynthesis.cancel();
       }
     };
-  }, [enabled]);
+  }, [enabled, rate, lang]);
 }

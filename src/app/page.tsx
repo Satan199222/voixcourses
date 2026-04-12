@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AccessibilityBar } from "@/components/accessibility-bar";
 import { LiveRegion } from "@/components/live-region";
+import { Logo } from "@/components/logo";
 import { StoreSelector } from "@/components/store-selector";
 import { GroceryInput } from "@/components/grocery-input";
 import { ListClarification } from "@/components/list-clarification";
@@ -10,6 +11,11 @@ import { ProductResults } from "@/components/product-results";
 import { CartHandoff } from "@/components/cart-handoff";
 import { useSpeech } from "@/lib/speech/use-speech";
 import { useFocusAnnounce } from "@/lib/speech/use-focus-announce";
+import {
+  usePreferences,
+  SPEECH_RATE_VALUE,
+} from "@/lib/preferences/use-preferences";
+import { useOrderHistory } from "@/lib/history/use-order-history";
 import type {
   CarrefourProduct,
   Cart,
@@ -23,14 +29,80 @@ type Step = "store" | "input" | "clarification" | "results" | "cart";
 interface MatchedItem {
   query: string;
   product: CarrefourProduct | null;
-  /** Prochaines alternatives à proposer (FIFO) */
   alternatives: CarrefourProduct[];
-  /** Tous les candidats initiaux pour pouvoir boucler */
   allCandidates: CarrefourProduct[];
-  /** Index du produit actuel dans allCandidates (pour annoncer "1 sur 4") */
   currentIndex: number;
-  /** Quantité demandée (default 1). Si 0, l'item est supprimé. */
   quantity: number;
+}
+
+/** Convertit un prix en texte prononçable "1 euros 26 centimes". */
+function priceToSpeech(price: number): string {
+  const [int, decimal] = price.toFixed(2).split(".");
+  if (decimal === "00") return `${int} euros`;
+  return `${int} euros ${parseInt(decimal, 10)} centimes`;
+}
+
+/** Reconstitue une liste textuelle depuis les items confirmés, pour l'historique. */
+function reconstructListText(items: MatchedItem[]): string {
+  return items
+    .filter((m) => m.product && m.quantity > 0)
+    .map((m) => {
+      const q = m.quantity > 1 ? `${m.quantity} ` : "";
+      return `${q}${m.query}`;
+    })
+    .join(", ");
+}
+
+const STEP_LABELS: Record<Step, string> = {
+  store: "Magasin",
+  input: "Liste",
+  clarification: "Préciser",
+  results: "Produits",
+  cart: "Panier",
+};
+
+/**
+ * Barre de progression visuelle (complément de `stepTitle` lu par le SR).
+ * Masqué des screen readers : l'étape est déjà annoncée sur le focus du h2.
+ */
+function StepProgress({ step }: { step: Step }) {
+  // "clarification" et "results" partagent la même étape logique n°3
+  const normalizedOrder: Step[] = ["store", "input", "clarification", "cart"];
+  const normalized: Step = step === "results" ? "clarification" : step;
+  const currentIndex = normalizedOrder.indexOf(normalized);
+
+  return (
+    <nav aria-hidden="true" className="flex items-center gap-2 text-sm">
+      {normalizedOrder.map((s, i) => {
+        const active = i === currentIndex;
+        const done = i < currentIndex;
+        return (
+          <div key={s} className="flex items-center gap-2 flex-1">
+            <div
+              className={`flex-1 h-2 rounded-full transition-colors ${
+                done
+                  ? "bg-[var(--success)]"
+                  : active
+                    ? "bg-[var(--accent)]"
+                    : "bg-[var(--border)]"
+              }`}
+            />
+            <span
+              className={`font-semibold whitespace-nowrap ${
+                active
+                  ? "text-[var(--accent)]"
+                  : done
+                    ? "text-[var(--success)]"
+                    : "text-[var(--text-muted)]"
+              }`}
+            >
+              {STEP_LABELS[s]}
+            </span>
+          </div>
+        );
+      })}
+    </nav>
+  );
 }
 
 export default function Home() {
@@ -38,9 +110,11 @@ export default function Home() {
   const [step, setStep] = useState<Step>("store");
   const [isLoading, setIsLoading] = useState(false);
   const [announcement, setAnnouncement] = useState("");
+  const [criticalAlert, setCriticalAlert] = useState("");
 
   // ── Store / slot ───────────────────────────────────────────────────────────
   const [storeRef, setStoreRef] = useState<string | null>(null);
+  const [storeName, setStoreName] = useState<string | null>(null);
   const [basketServiceId, setBasketServiceId] = useState<string | null>(null);
   const [slot, setSlot] = useState<DeliverySlot | null>(null);
 
@@ -50,6 +124,7 @@ export default function Home() {
   // ── Results phase ──────────────────────────────────────────────────────────
   const [matchedItems, setMatchedItems] = useState<MatchedItem[]>([]);
   const [confirmedEans, setConfirmedEans] = useState<Set<string>>(new Set());
+  const [isSearching, setIsSearching] = useState(false);
 
   // ── Add-a-product input (bottom of results) ────────────────────────────────
   const [addQuery, setAddQuery] = useState("");
@@ -60,16 +135,29 @@ export default function Home() {
 
   // ── Accessibility / speech ─────────────────────────────────────────────────
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const { transcript, isListening, startListening, stopListening, speak, isSupported } =
-    useSpeech();
+  const { prefs, rememberChoice } = usePreferences();
+  const history = useOrderHistory();
 
-  // Voix qui suit le focus clavier (opt-in via la barre d'accessibilité)
-  useFocusAnnounce(voiceEnabled);
+  const {
+    transcript,
+    isListening,
+    isSpeaking,
+    startListening,
+    stopListening,
+    speak,
+    cancelSpeech,
+    isSupported,
+  } = useSpeech({
+    rate: SPEECH_RATE_VALUE[prefs.speechRate],
+    lang: prefs.speechLocale,
+  });
+
+  useFocusAnnounce(voiceEnabled, {
+    rate: SPEECH_RATE_VALUE[prefs.speechRate] * 1.1, // focus un peu plus rapide
+    lang: prefs.speechLocale,
+  });
 
   // ── Focus management ───────────────────────────────────────────────────────
-  // On place le focus sur le heading de l'étape courante (h2) plutôt que sur
-  // un <div> générique. Le screen reader annonce ainsi le contexte immédiat
-  // ("Choisir votre magasin, niveau 2") plutôt que tout le header de la page.
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const focusStepHeading = useCallback(() => {
@@ -78,7 +166,6 @@ export default function Home() {
     }, 50);
   }, []);
 
-  // ── Announce helper (aria-live + optional TTS) ─────────────────────────────
   const announce = useCallback(
     (msg: string) => {
       setAnnouncement(msg);
@@ -89,15 +176,26 @@ export default function Home() {
     [speak, voiceEnabled]
   );
 
-  // ── On mount: check localStorage for previously selected store ────────────
+  const alertCritical = useCallback(
+    (msg: string) => {
+      setCriticalAlert(msg);
+      if (voiceEnabled) {
+        speak(msg);
+      }
+    },
+    [speak, voiceEnabled]
+  );
+
+  // ── On mount: check localStorage ───────────────────────────────────────────
   useEffect(() => {
     const savedRef = localStorage.getItem("storeRef");
     const savedBsid = localStorage.getItem("basketServiceId");
+    const savedName = localStorage.getItem("storeName");
     if (savedRef && savedBsid) {
       setStoreRef(savedRef);
       setBasketServiceId(savedBsid);
+      if (savedName) setStoreName(savedName);
       setStep("input");
-      // Fetch delivery slot in background
       fetch(`/api/slots?storeRef=${savedRef}`)
         .then((r) => r.json())
         .then((d) => setSlot(d.slot ?? null))
@@ -105,12 +203,10 @@ export default function Home() {
     }
   }, []);
 
-  // ── Step transitions: move focus to step heading ──────────────────────────
   useEffect(() => {
     focusStepHeading();
   }, [step, focusStepHeading]);
 
-  // Titre dynamique selon l'étape (lu par le screen reader au changement de focus)
   const stepTitle = {
     store: "Étape 1 sur 4 : Choisissez votre magasin",
     input: "Étape 2 sur 4 : Votre liste de courses",
@@ -123,10 +219,11 @@ export default function Home() {
   async function handleStoreSelected(store: CarrefourStore, bsid: string) {
     setStoreRef(store.ref);
     setBasketServiceId(bsid);
+    setStoreName(store.name);
     localStorage.setItem("storeRef", store.ref);
     localStorage.setItem("basketServiceId", bsid);
+    localStorage.setItem("storeName", store.name);
 
-    // Fetch first delivery slot
     try {
       const res = await fetch(`/api/slots?storeRef=${store.ref}`);
       const data = await res.json();
@@ -145,96 +242,133 @@ export default function Home() {
     announce("Analyse de votre liste en cours...");
 
     try {
-      // 1. Parse the list via Claude
       const parseRes = await fetch("/api/parse-list", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text,
+          context: {
+            diet: prefs.diet,
+            allergens: prefs.allergens,
+            defaults: prefs.defaults,
+          },
+        }),
       });
-      const { items }: { items: ParsedGroceryItem[] } = await parseRes.json();
 
+      if (!parseRes.ok) {
+        const err = await parseRes.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur inconnue");
+      }
+
+      const { items }: { items: ParsedGroceryItem[] } = await parseRes.json();
       const needsClarification = items.some((i) => i.status !== "clear");
 
       if (needsClarification) {
         setParsedItems(items);
         setIsLoading(false);
         const toReview = items.filter((i) => i.status !== "clear").length;
-        announce(`${toReview} produit(s) à préciser avant de lancer la recherche.`);
+        announce(`${toReview} produit${toReview > 1 ? "s" : ""} à préciser avant de lancer la recherche.`);
         setStep("clarification");
       } else {
-        // All clear — skip straight to search
         await runSearch(items);
       }
-    } catch {
-      announce("Une erreur est survenue lors de l'analyse. Veuillez réessayer.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      alertCritical(
+        `Analyse impossible : ${msg}. Veuillez réessayer ou simplifier votre liste.`
+      );
       setIsLoading(false);
     }
   }
 
-  // ── Clarification validated ────────────────────────────────────────────────
   async function handleClarificationValidate() {
     setIsLoading(true);
     announce("Recherche des produits en cours...");
     await runSearch(parsedItems);
   }
 
-  // ── Run search for a list of parsed items ─────────────────────────────────
+  // ── Run search — avec progression annoncée au fur et à mesure ──────────────
   async function runSearch(items: ParsedGroceryItem[]) {
-    try {
-      const matched: MatchedItem[] = await Promise.all(
-        items.map(async (item) => {
-          // Tenter d'extraire la quantité souhaitée depuis le texte original
-          // (ex: "2 litres de lait" → quantity=2, "6 yaourts" → quantity=6)
-          const initialQuantity = item.quantity && item.quantity > 0 ? item.quantity : 1;
-          try {
-            const searchRes = await fetch(
-              `/api/search?q=${encodeURIComponent(item.query)}`
-            );
-            const searchData = await searchRes.json();
-            const products: CarrefourProduct[] = searchData.products || [];
-            const candidates = products.slice(0, 5);
-            return {
-              query: item.query,
+    setIsSearching(true);
+    setStep("results");
+    setMatchedItems([]);
+    setConfirmedEans(new Set());
+
+    // Préparer les emplacements vides pour que l'UI montre immédiatement le
+    // skeleton et que les annonces "trouvé X sur N" aient du sens.
+    const placeholders: MatchedItem[] = items.map((item) => ({
+      query: item.query,
+      product: null,
+      alternatives: [],
+      allCandidates: [],
+      currentIndex: 0,
+      quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
+    }));
+    setMatchedItems(placeholders);
+    setIsLoading(false);
+
+    const dietParam = prefs.diet.length > 0 ? prefs.diet.join(",") : "";
+    let found = 0;
+
+    // Parallélisation totale + annonce progressive. Promise.allSettled évite
+    // qu'une seule recherche en erreur n'arrête l'ensemble.
+    await Promise.allSettled(
+      items.map(async (item, index) => {
+        const params = new URLSearchParams({ q: item.query });
+        if (dietParam) params.set("diet", dietParam);
+        if (item.brand) params.set("brand", item.brand);
+        if (item.quantity && item.quantity > 1) {
+          params.set("qty", String(item.quantity));
+        }
+        if (item.unit) params.set("unit", item.unit);
+
+        try {
+          const searchRes = await fetch(`/api/search?${params}`);
+          const searchData = await searchRes.json();
+          const products: CarrefourProduct[] = searchData.products || [];
+          const candidates = products.slice(0, 5);
+          const hadResult = candidates[0] != null;
+
+          setMatchedItems((prev) => {
+            const next = [...prev];
+            next[index] = {
+              ...next[index],
               product: candidates[0] ?? null,
               alternatives: candidates.slice(1),
               allCandidates: candidates,
               currentIndex: 0,
-              quantity: initialQuantity,
             };
-          } catch {
-            return {
-              query: item.query,
-              product: null,
-              alternatives: [],
-              allCandidates: [],
-              currentIndex: 0,
-              quantity: initialQuantity,
-            };
+            return next;
+          });
+
+          if (hadResult) {
+            found++;
+            // Annonce discrète au fur et à mesure pour ne pas surcharger
+            announce(`${found} produit${found > 1 ? "s" : ""} trouvé${found > 1 ? "s" : ""} sur ${items.length}.`);
           }
-        })
-      );
+        } catch {
+          // Item marqué "aucun résultat" — déjà le placeholder par défaut
+        }
+      })
+    );
 
-      setMatchedItems(matched);
-      setConfirmedEans(new Set());
-      setStep("results");
-      setIsLoading(false);
-
-      const found = matched.filter((m) => m.product).length;
-      announce(
-        `${found} produit(s) trouvé(s) sur ${items.length}. Vérifiez et confirmez chaque produit.`
-      );
-    } catch {
-      announce("Une erreur est survenue lors de la recherche. Veuillez réessayer.");
-      setIsLoading(false);
-    }
+    setIsSearching(false);
+    announce(
+      `Recherche terminée. ${found} produit${found > 1 ? "s" : ""} trouvé${found > 1 ? "s" : ""} sur ${items.length}. Vérifiez et confirmez chaque produit.`
+    );
   }
 
   // ── Confirm / reject product ───────────────────────────────────────────────
   function handleConfirm(ean: string) {
     setConfirmedEans((prev) => new Set([...prev, ean]));
-    const product = matchedItems.find((m) => m.product?.ean === ean)?.product;
+    const match = matchedItems.find((m) => m.product?.ean === ean);
+    const product = match?.product;
     if (product) {
-      announce(`${product.title} confirmé. ${product.price?.toFixed(2) ?? "?"} euros.`);
+      announce(`${product.title} confirmé. ${priceToSpeech(product.price ?? 0)}.`);
+      // Mémoriser le choix pour les futures dictées (ex: "yaourts" → "yaourts nature")
+      if (match?.query) {
+        rememberChoice(match.query, match.query);
+      }
     }
   }
 
@@ -245,17 +379,15 @@ export default function Home() {
 
         const total = item.allCandidates.length;
         if (total <= 1) {
-          // Pas de vraie alternative disponible
           announce(`Pas d'autre choix disponible pour ${query}.`);
           return item;
         }
 
-        // Avancer dans la liste des candidats, avec boucle
         const nextIndex = (item.currentIndex + 1) % total;
         const next = item.allCandidates[nextIndex];
         const looped = nextIndex === 0;
 
-        const priceText = `${next.price?.toFixed(2) ?? "?"} euros`;
+        const priceText = priceToSpeech(next.price ?? 0);
         announce(
           looped
             ? `Retour au premier choix. ${next.title}, ${priceText}.`
@@ -266,7 +398,6 @@ export default function Home() {
           ...item,
           product: next,
           currentIndex: nextIndex,
-          // Recalculer les alternatives restantes (pour l'UI si elle les affiche)
           alternatives: [
             ...item.allCandidates.slice(nextIndex + 1),
             ...item.allCandidates.slice(0, nextIndex),
@@ -276,33 +407,24 @@ export default function Home() {
     );
   }
 
-  /**
-   * Augmente la quantité d'un produit. Annonce le changement.
-   */
   function handleIncrement(query: string) {
     setMatchedItems((prev) =>
       prev.map((item) => {
         if (item.query !== query) return item;
         const newQty = item.quantity + 1;
         if (item.product) {
-          announce(
-            `Quantité ${newQty} de ${item.product.title}.`
-          );
+          announce(`Quantité ${newQty} de ${item.product.title}.`);
         }
         return { ...item, quantity: newQty };
       })
     );
   }
 
-  /**
-   * Diminue la quantité d'un produit. À 0, l'item est supprimé de la liste.
-   */
   function handleDecrement(query: string) {
     const item = matchedItems.find((i) => i.query === query);
     if (!item) return;
 
     if (item.quantity <= 1) {
-      // Décrémenter depuis 1 → suppression
       const removedEan = item.product?.ean;
       setMatchedItems((prev) => prev.filter((i) => i.query !== query));
       if (removedEan) {
@@ -320,7 +442,6 @@ export default function Home() {
       return;
     }
 
-    // Décrémenter de N vers N-1
     setMatchedItems((prev) =>
       prev.map((i) => {
         if (i.query !== query) return i;
@@ -342,7 +463,11 @@ export default function Home() {
     announce(`Recherche de ${q}...`);
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const dietParam = prefs.diet.length > 0 ? prefs.diet.join(",") : "";
+      const params = new URLSearchParams({ q });
+      if (dietParam) params.set("diet", dietParam);
+
+      const res = await fetch(`/api/search?${params}`);
       const data = await res.json();
       const products: CarrefourProduct[] = data.products || [];
       const candidates = products.slice(0, 5);
@@ -364,19 +489,15 @@ export default function Home() {
         announce(`Aucun produit trouvé pour ${q}.`);
       }
     } catch {
-      announce("Erreur lors de la recherche. Veuillez réessayer.");
+      alertCritical("Erreur lors de la recherche. Veuillez réessayer.");
     } finally {
       setIsAddingProduct(false);
     }
   }
 
-  // ── Préparer le panier pour le transfert vers la session utilisateur ──────
-  // On n'appelle PLUS PATCH /api/cart côté serveur — c'est le bookmarklet
-  // qui le fera dans la session de l'utilisateur. On construit juste un
-  // objet Cart à partir des produits confirmés pour l'affichage.
   function handlePrepareCart() {
     if (!basketServiceId) {
-      announce("Erreur : aucun magasin sélectionné.");
+      alertCritical("Erreur : aucun magasin sélectionné.");
       return;
     }
 
@@ -405,12 +526,20 @@ export default function Home() {
     setCart(virtualCart);
     setStep("cart");
 
+    // Persister pour "Reprendre ma dernière commande"
+    history.add({
+      at: new Date().toISOString(),
+      listText: reconstructListText(confirmedItems),
+      count: confirmedItems.length,
+      total: totalAmount,
+      storeName: storeName ?? undefined,
+    });
+
     announce(
-      `Liste prête. ${confirmedItems.length} produit(s) pour ${totalAmount.toFixed(2).replace(".", " euros ")}. Copiez le lien magique et collez-le sur carrefour.fr pour remplir votre panier.`
+      `Liste prête. ${confirmedItems.length} produit${confirmedItems.length > 1 ? "s" : ""} pour ${priceToSpeech(totalAmount)}. Transférez-la maintenant vers votre panier Carrefour.`
     );
   }
 
-  // ── Reset ──────────────────────────────────────────────────────────────────
   function handleNewList() {
     setParsedItems([]);
     setMatchedItems([]);
@@ -423,29 +552,65 @@ export default function Home() {
   // ── Derived ────────────────────────────────────────────────────────────────
   const allConfirmed =
     matchedItems.length > 0 &&
+    !isSearching &&
     matchedItems
       .filter((m) => m.product)
       .every((m) => confirmedEans.has(m.product!.ean));
 
+  const confirmedProducts = matchedItems
+    .filter((m) => m.product && confirmedEans.has(m.product.ean) && m.quantity > 0);
+  const totalEstimated = confirmedProducts.reduce(
+    (sum, m) => sum + (m.product!.price ?? 0) * m.quantity,
+    0
+  );
+  const articleCount = confirmedProducts.reduce((n, m) => n + m.quantity, 0);
+
+  const slotText = slot
+    ? new Date(slot.begDate).toLocaleDateString("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }) +
+      " de " +
+      new Date(slot.begDate).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* AccessibilityBar is always at the top; voiceEnabled lifted to page */}
       <AccessibilityBar onVoiceToggle={setVoiceEnabled} />
 
-      {/* aria-live region rendered once, never removed */}
+      {/* Annonces normales (polite) */}
       <LiveRegion message={announcement} />
+      {/* Alertes critiques (assertive, interrompent le lecteur d'écran) */}
+      <LiveRegion message={criticalAlert} urgency="assertive" />
 
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        <header>
-          <h1 className="text-3xl font-bold">VoixCourses</h1>
-          <p className="text-[var(--text-muted)] mt-1">
-            Dictez ou tapez votre liste. L'IA remplit votre panier Carrefour.
-          </p>
+        <header className="flex items-center gap-4">
+          <div
+            className="shrink-0 w-16 h-16 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--accent)] flex items-center justify-center text-[var(--accent)]"
+            style={{ boxShadow: "var(--shadow-md)" }}
+          >
+            <Logo className="w-10 h-10" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              VoixCourses
+            </h1>
+            <p className="text-[var(--text-muted)] mt-0.5 text-base">
+              Dictez ou tapez votre liste. L&apos;IA remplit votre panier Carrefour.
+            </p>
+          </div>
         </header>
 
-        {/* Heading d'étape — reçoit le focus à chaque changement d'étape.
-            Le screen reader annonce ainsi le contexte au lieu du header complet. */}
+        {/* Indicateur d'étape visuel — complément aux annonces ARIA pour les
+            utilisateurs voyants qui veulent situer leur progression. */}
+        <StepProgress step={step} />
+
+
         <h2
           ref={stepHeadingRef}
           tabIndex={-1}
@@ -455,12 +620,10 @@ export default function Home() {
           {stepTitle}
         </h2>
 
-        {/* Phase 1 — Store selection */}
         {step === "store" && (
           <StoreSelector onStoreSelected={handleStoreSelected} />
         )}
 
-        {/* Phase 2 — Grocery list input */}
         {step === "input" && (
           <GroceryInput
             onSubmit={handleSubmit}
@@ -469,10 +632,13 @@ export default function Home() {
             onMicClick={isListening ? stopListening : startListening}
             transcript={transcript}
             isMicSupported={isSupported}
+            lastOrder={history.hydrated ? history.lastEntry : null}
+            onSpeak={speak}
+            onCancelSpeech={cancelSpeech}
+            isSpeaking={isSpeaking}
           />
         )}
 
-        {/* Phase 2.5 — Clarification */}
         {step === "clarification" && (
           <ListClarification
             items={parsedItems}
@@ -481,34 +647,40 @@ export default function Home() {
                 prev.map((item, i) => (i === index ? { ...item, ...update } : item))
               );
             }}
+            onRemove={(index) => {
+              setParsedItems((prev) => prev.filter((_, i) => i !== index));
+              announce("Produit retiré de la liste.");
+            }}
             onValidate={handleClarificationValidate}
           />
         )}
 
-        {/* Phase 3 — Results */}
         {step === "results" && (
           <>
-            {/* Skip link vers le bouton final — utile quand il y a beaucoup
-                de produits. Visible uniquement au focus. */}
             {allConfirmed && (
               <a
                 href="#add-to-cart-button"
                 className="sr-only focus:not-sr-only focus:inline-block focus:px-4 focus:py-2 focus:bg-[var(--accent)] focus:text-[var(--bg)] focus:rounded focus:font-semibold"
               >
-                Aller directement au bouton Ajouter au panier
+                Aller directement au bouton Valider la liste
               </a>
             )}
 
-            <ProductResults
-              items={matchedItems}
-              onConfirm={handleConfirm}
-              onReject={handleReject}
-              onIncrement={handleIncrement}
-              onDecrement={handleDecrement}
-              confirmedEans={confirmedEans}
-            />
+            <div
+              aria-busy={isSearching}
+              aria-live="polite"
+              className={isSearching ? "opacity-90" : ""}
+            >
+              <ProductResults
+                items={matchedItems}
+                onConfirm={handleConfirm}
+                onReject={handleReject}
+                onIncrement={handleIncrement}
+                onDecrement={handleDecrement}
+                confirmedEans={confirmedEans}
+              />
+            </div>
 
-            {/* Add a product */}
             <form
               onSubmit={handleAddProduct}
               className="flex gap-3"
@@ -535,38 +707,51 @@ export default function Home() {
               </button>
             </form>
 
-            {/* Valider la liste — visible once all found products are confirmed.
-                On N'appelle PLUS l'API cart côté serveur : c'est le bookmarklet
-                qui le fera dans la session du user. Ici on prépare juste
-                la liste pour l'affichage de l'écran final. */}
-            {allConfirmed && (() => {
-              const confirmedProducts = matchedItems
-                .filter((m) => m.product && confirmedEans.has(m.product.ean))
-                .map((m) => m.product!);
-              const totalEstimated = confirmedProducts.reduce(
-                (sum, p) => sum + (p.price ?? 0),
-                0
-              );
-              const count = confirmedProducts.length;
-              const totalText = totalEstimated
-                .toFixed(2)
-                .replace(".", " euros ");
-
-              return (
-                <button
-                  id="add-to-cart-button"
-                  onClick={handlePrepareCart}
-                  aria-label={`Valider ma liste : ${count} produit${count > 1 ? "s" : ""}, total estimé ${totalText}`}
-                  className="w-full px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] transition-colors"
+            {/* Récapitulatif pré-validation — CRITIQUE pour utilisateur non-voyant.
+                Avant "Valider", il doit entendre exactement ce qu'il s'apprête à commander.
+                role=status + aria-live=polite : annonce quand ça change. */}
+            {allConfirmed && (
+              <section
+                aria-label="Récapitulatif avant validation"
+                role="status"
+                aria-live="polite"
+                className="p-4 rounded-lg bg-[var(--bg-surface)] border-2 border-[var(--accent)]"
+              >
+                <h3 className="font-bold mb-2">Récapitulatif</h3>
+                <p
+                  aria-label={`${confirmedProducts.length} produit${confirmedProducts.length > 1 ? "s" : ""} différent${confirmedProducts.length > 1 ? "s" : ""}, ${articleCount} article${articleCount > 1 ? "s" : ""} au total, pour un montant estimé de ${priceToSpeech(totalEstimated)}${slotText ? `, livraison prévue ${slotText}` : ""}.`}
                 >
-                  {`Valider ma liste (${count} produit${count > 1 ? "s" : ""}, ${totalEstimated.toFixed(2)}€)`}
-                </button>
-              );
-            })()}
+                  {confirmedProducts.length} produit
+                  {confirmedProducts.length > 1 ? "s" : ""} ({articleCount} article
+                  {articleCount > 1 ? "s" : ""}) —{" "}
+                  <strong className="text-[var(--accent)]">
+                    {totalEstimated.toFixed(2)}€
+                  </strong>
+                  {slotText && (
+                    <>
+                      <br />
+                      <span className="text-sm text-[var(--text-muted)]">
+                        Livraison : {slotText}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </section>
+            )}
+
+            {allConfirmed && (
+              <button
+                id="add-to-cart-button"
+                onClick={handlePrepareCart}
+                aria-label={`Valider ma liste : ${confirmedProducts.length} produit${confirmedProducts.length > 1 ? "s" : ""}, ${articleCount} article${articleCount > 1 ? "s" : ""}, total estimé ${priceToSpeech(totalEstimated)}`}
+                className="w-full px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                {`Valider ma liste (${confirmedProducts.length} produit${confirmedProducts.length > 1 ? "s" : ""}, ${totalEstimated.toFixed(2)}€)`}
+              </button>
+            )}
           </>
         )}
 
-        {/* Phase 4 — Remise du panier à l'utilisateur via bookmarklet */}
         {step === "cart" && storeRef && basketServiceId && (
           <CartHandoff
             cart={cart}
@@ -576,7 +761,6 @@ export default function Home() {
           />
         )}
 
-        {/* Back to new list */}
         {step !== "store" && step !== "input" && (
           <button
             onClick={handleNewList}
@@ -586,7 +770,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* Change store */}
         {step === "input" && (
           <button
             onClick={() => setStep("store")}

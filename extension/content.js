@@ -134,7 +134,7 @@ function getItems(list) {
  * Remplir le panier Carrefour avec les items fournis (ean + quantity).
  * S'exécute dans la session utilisateur (mêmes cookies que la page).
  */
-async function fillCart(list) {
+async function fillCart(list, onProgress) {
   // 1. Sélectionner le magasin VoixCourses
   await fetch(`/set-store/${list.storeRef}`, {
     headers: {
@@ -147,9 +147,12 @@ async function fillCart(list) {
   const failures = [];
   let lastTotal = 0;
   const items = getItems(list);
+  const total = items.length;
 
-  // 2. Ajouter chaque produit avec sa quantité demandée
-  for (const item of items) {
+  // 2. Ajouter chaque produit avec sa quantité demandée, en rapportant la
+  //    progression au caller pour que l'utilisateur non-voyant sache où on en est.
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
     const quantity = item.quantity && item.quantity > 0 ? item.quantity : 1;
     try {
       const res = await fetch("/api/cart", {
@@ -178,13 +181,22 @@ async function fillCart(list) {
 
       if (!res.ok) {
         failures.push(item.ean);
+        if (typeof onProgress === "function") {
+          onProgress({ done: i + 1, total, ok: false, ean: item.ean });
+        }
         continue;
       }
 
       const data = await res.json();
       lastTotal = data?.cart?.totalAmount ?? lastTotal;
+      if (typeof onProgress === "function") {
+        onProgress({ done: i + 1, total, ok: true, ean: item.ean });
+      }
     } catch {
       failures.push(item.ean);
+      if (typeof onProgress === "function") {
+        onProgress({ done: i + 1, total, ok: false, ean: item.ean });
+      }
     }
   }
 
@@ -420,7 +432,18 @@ async function showBanner(list) {
     fillBtn.textContent = "Ajout en cours...";
     tts.speak(progressMsg);
 
-    const { failures, total } = await fillCart(list);
+    // Progression : annonce discrète tous les 2 items pour ne pas saturer
+    // l'audio (ex: panier de 15 items = 7-8 annonces, acceptable).
+    const { failures, total } = await fillCart(list, ({ done, total: t }) => {
+      fillBtn.textContent = `Ajout ${done} sur ${t}...`;
+      // Mise à jour continue dans aria-live (silencieuse tant que polite)
+      status.textContent = `Ajout ${done} sur ${t}`;
+      // TTS : uniquement tous les 2 items, ou au dernier, pour rester audible
+      const shouldSpeak = done === t || done % 2 === 0;
+      if (shouldSpeak && done < t) {
+        tts.speak(`${done} sur ${t}`);
+      }
+    });
 
     if (failures.length === 0) {
       const successMsg = `Panier rempli. ${itemCount} produit${itemCount > 1 ? "s" : ""} pour ${total.toFixed(2)} euros. Redirection vers votre panier.`;

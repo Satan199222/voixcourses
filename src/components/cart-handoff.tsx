@@ -37,6 +37,7 @@ export function CartHandoff({
   const [showScript, setShowScript] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<string | null>(null);
+  const [openedTab, setOpenedTab] = useState(false);
   const extension = useExtension();
 
   if (!cart || cart.items.length === 0) return null;
@@ -72,8 +73,6 @@ export function CartHandoff({
       setSendStatus(`Erreur : ${result.error || "impossible d'envoyer la liste"}`);
     }
   }
-
-  const [openedTab, setOpenedTab] = useState(false);
 
   async function handleCopyAndOpen() {
     try {
