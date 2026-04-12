@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Force Tailwind v4 to scan our source files for class names.
+   Without this, Turbopack + Tailwind v4 may not auto-detect .tsx classes. */
+@source "../**/*.{ts,tsx}";
+
 /* Thème sombre — défaut, contraste AAA (7:1+) */
 :root {
   --bg: #0f0f1a;
