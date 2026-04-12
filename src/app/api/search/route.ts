@@ -1,11 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchProducts } from "@/lib/carrefour/client";
 import { rankProducts } from "@/lib/carrefour/score";
+import {
+  rateLimit,
+  clientKey,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
+
+/** 30 recherches par minute — une liste de 20 produits déclenche 20 search en
+ *  parallèle, on laisse donc large mais on coupe les bursts abusifs. */
+const RATE_MAX = 30;
+const RATE_WINDOW_MS = 60_000;
+/** Longueur max de la query — au-delà c'est forcément du bruit ou un abus. */
+const MAX_QUERY_LENGTH = 200;
 
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(
+    `search:${clientKey(request)}`,
+    RATE_MAX,
+    RATE_WINDOW_MS
+  );
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Trop de recherches. Veuillez patienter." },
+      {
+        status: 429,
+        headers: rateLimitHeaders(RATE_MAX, rl.remaining, rl.resetAt),
+      }
+    );
+  }
+
   const query = request.nextUrl.searchParams.get("q");
   if (!query) {
     return NextResponse.json({ error: "q requis" }, { status: 400 });
+  }
+  if (query.length > MAX_QUERY_LENGTH) {
+    return NextResponse.json(
+      { error: "Requête trop longue." },
+      { status: 413 }
+    );
   }
 
   // Contexte optionnel pour le reranking. Passé en query string pour rester
