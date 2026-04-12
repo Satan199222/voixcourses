@@ -157,17 +157,33 @@ body {
   }
 }
 
-/* Transition subtile entre étapes — légère apparition pour accompagner le
-   changement, sans gêner. Respecte prefers-reduced-motion (désactivée). */
+/* Transitions subtiles — apparition pour accompagner les changements.
+   Respecte prefers-reduced-motion. */
 @keyframes voixcourses-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .step-fade {
   animation: voixcourses-fade-in 240ms ease-out both;
 }
+
+/* Animations pour l'orb de conversation */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes pingSlow {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .step-fade { animation: none; }
+  .step-fade,
+  [class*="animate-"] { animation: none !important; }
 }
 
 /* sr-only utility (Tailwind v4) */
