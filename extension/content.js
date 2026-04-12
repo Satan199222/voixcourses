@@ -10,6 +10,55 @@
 const STORAGE_KEY = "voixcourses-pending-list";
 const BANNER_ID = "voixcourses-banner";
 
+/**
+ * Synthèse vocale accessible dans le contexte carrefour.fr.
+ * Toujours active dans l'extension — l'utilisateur a volontairement installé
+ * l'extension pour l'assistance vocale, pas besoin d'opt-in supplémentaire.
+ *
+ * Prononciation française : prix en "X euros YY centimes", unités étendues.
+ */
+const tts = {
+  frenchVoice: null,
+  initialized: false,
+
+  init() {
+    if (this.initialized) return;
+    this.initialized = true;
+    const pickVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      this.frenchVoice = voices.find((v) => v.lang.startsWith("fr")) || null;
+    };
+    pickVoice();
+    window.speechSynthesis.onvoiceschanged = pickVoice;
+  },
+
+  normalize(text) {
+    return (text || "")
+      .replace(/(\d+)[.,](\d{2})\s*€/g, "$1 euros $2 centimes")
+      .replace(/(\d+)\s*€/g, "$1 euros")
+      .replace(/(\d+(?:[.,]\d+)?)\s*L\b/g, "$1 litres")
+      .replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi, "$1 kilogrammes")
+      .replace(/(\d+(?:[.,]\d+)?)\s*g\b/g, "$1 grammes")
+      .replace(/(\d+)\s*cl\b/g, "$1 centilitres")
+      .replace(/(\d+)\s*ml\b/g, "$1 millilitres");
+  },
+
+  speak(text) {
+    if (!text || !window.speechSynthesis) return;
+    this.init();
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(this.normalize(text));
+    utterance.lang = "fr-FR";
+    utterance.rate = 1.05;
+    if (this.frenchVoice) utterance.voice = this.frenchVoice;
+    window.speechSynthesis.speak(utterance);
+  },
+
+  cancel() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  },
+};
+
 function getPendingList() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEY], (result) => {
@@ -343,7 +392,33 @@ async function showBanner(list) {
 
   document.documentElement.appendChild(banner);
 
-  // Focus automatique sur le bouton principal
+  // ── Annonce vocale de bienvenue : recap complet ──────────────────────
+  const authText = auth.loggedIn
+    ? `Connecté${auth.firstName ? " en tant que " + auth.firstName : ""}`
+    : "Attention, vous n'êtes pas connecté à Carrefour. Vous devrez vous connecter avant le paiement";
+  const cartStatus = currentCart.itemCount > 0
+    ? `Votre panier contient déjà ${currentCart.itemCount} article${currentCart.itemCount > 1 ? "s" : ""} pour ${currentCart.total.toFixed(2)} euros`
+    : "Votre panier est vide";
+  const actions = currentCart.itemCount > 0
+    ? "Trois boutons disponibles : Ajouter pour garder vos articles existants, Remplacer pour les remplacer, Ignorer pour annuler"
+    : "Deux boutons disponibles : Remplir mon panier ou Ignorer";
+
+  const recap = `VoixCourses. Liste prête : ${list.title}. ${authText}. ${cartStatus}. ${actions}.`;
+  tts.speak(recap);
+
+  // ── Annonce vocale au focus des boutons ─────────────────────────────
+  function addFocusSpeaker(btn) {
+    btn.addEventListener("focus", () => {
+      const label = btn.getAttribute("aria-label") || btn.textContent || "";
+      tts.speak(label);
+    });
+  }
+  addFocusSpeaker(fillBtn);
+  addFocusSpeaker(dismissBtn);
+  const replaceBtnEl = document.getElementById("voixcourses-replace");
+  if (replaceBtnEl) addFocusSpeaker(replaceBtnEl);
+
+  // Focus automatique sur le bouton principal (avec délai pour laisser le TTS démarrer)
   setTimeout(() => fillBtn.focus(), 100);
 
   /**
@@ -355,29 +430,36 @@ async function showBanner(list) {
     if (replaceBtn) replaceBtn.setAttribute("disabled", "true");
 
     if (mode === "replace" && currentCart.eans.length > 0) {
-      status.textContent = `Suppression des ${currentCart.itemCount} articles existants...`;
+      const msg = `Suppression des ${currentCart.itemCount} articles existants`;
+      status.textContent = msg;
       fillBtn.textContent = "Vidage du panier...";
+      tts.speak(msg);
       for (const existingEan of currentCart.eans) {
         await removeFromCart(list.basketServiceId, existingEan);
       }
     }
 
-    status.textContent = "Ajout des produits à votre panier en cours...";
+    const progressMsg = `Ajout de ${itemCount} produit${itemCount > 1 ? "s" : ""} à votre panier Carrefour`;
+    status.textContent = progressMsg;
     fillBtn.textContent = "Ajout en cours...";
+    tts.speak(progressMsg);
 
     const { failures, total } = await fillCart(list);
 
     if (failures.length === 0) {
-      status.textContent = `Panier rempli. ${itemCount} produits pour ${total.toFixed(2)} euros. Redirection vers votre panier.`;
+      const successMsg = `Panier rempli. ${itemCount} produit${itemCount > 1 ? "s" : ""} pour ${total.toFixed(2)} euros. Redirection vers votre panier.`;
+      status.textContent = successMsg;
+      tts.speak(successMsg);
       chrome.storage.local.remove([STORAGE_KEY]);
-      // URL du panier — dépend du mode de livraison du magasin.
-      // /cart/driveclcv pour Drive, /cart/delivery pour livraison.
-      // On tente driveclcv qui est le plus courant, avec fallback.
+      // Flag pour que la page panier annonce vocalement le résultat final
+      chrome.storage.local.set({ [POST_FILL_KEY]: { at: Date.now() } });
       setTimeout(() => {
         window.location.href = "/cart/driveclcv";
-      }, 600);
+      }, 1800);
     } else {
-      status.textContent = `Ajout terminé avec ${failures.length} erreur. Total : ${total.toFixed(2)} euros.`;
+      const errorMsg = `Ajout terminé avec ${failures.length} erreur${failures.length > 1 ? "s" : ""}. Total : ${total.toFixed(2)} euros.`;
+      status.textContent = errorMsg;
+      tts.speak(errorMsg);
       fillBtn.removeAttribute("disabled");
       fillBtn.textContent = `Panier partiellement rempli (${failures.length} erreur${failures.length > 1 ? "s" : ""})`;
     }
@@ -401,10 +483,47 @@ async function showBanner(list) {
   });
 }
 
-// Au chargement : vérifier si une liste est en attente
+/**
+ * Annoncer l'arrivée sur la page panier Carrefour après un remplissage.
+ * L'extension garde en mémoire qu'on vient de faire un fillCart, et
+ * annonce vocalement le résumé quand la page /cart/ charge.
+ */
+const POST_FILL_KEY = "voixcourses-just-filled";
+
+async function announceCartPage() {
+  const isCartPage =
+    location.pathname.includes("/cart") ||
+    location.pathname.includes("/mon-panier");
+  if (!isCartPage) return;
+
+  // Vérifier si on vient juste de remplir (flag mis avant redirect)
+  const data = await new Promise((resolve) => {
+    chrome.storage.local.get([POST_FILL_KEY], (r) => resolve(r[POST_FILL_KEY]));
+  });
+  if (!data) return;
+
+  // Nettoyer le flag
+  chrome.storage.local.remove([POST_FILL_KEY]);
+
+  // Lire le panier et annoncer
+  const cart = await readCurrentCart();
+  const auth = await checkAuth();
+  const authLine = auth.loggedIn
+    ? `Vous êtes connecté${auth.firstName ? " en tant que " + auth.firstName : ""}.`
+    : "Vous n'êtes pas connecté. Cliquez sur Se connecter pour finaliser votre commande.";
+  const announcement = `Panier Carrefour ouvert. ${cart.itemCount} article${cart.itemCount > 1 ? "s" : ""} pour ${cart.total.toFixed(2)} euros. ${authLine}`;
+  tts.speak(announcement);
+}
+
+// Au chargement : vérifier si une liste est en attente, ou si on arrive
+// sur la page panier après un remplissage (pour annoncer le résultat).
 (async () => {
   const list = await getPendingList();
-  if (list) showBanner(list);
+  if (list) {
+    showBanner(list);
+  } else {
+    announceCartPage();
+  }
 })();
 
 // Réagir si la liste change (autre onglet, nouvel envoi)
