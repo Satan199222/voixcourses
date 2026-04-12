@@ -406,27 +406,25 @@ export default function ConversationPageClient() {
 
         <InstallExtensionBanner />
 
-        {/* Widget ElevenLabs — intégré dans le flow visuel, pas en pastille
-            flottante. variant="expanded" donne une zone dédiée centrée qu'on
-            peut styler (orb + transcript + contrôles). */}
+        {/* Instructions explicites pour trouver le widget — il s'affiche
+            en pastille flottante en bas à droite de l'écran avec les couleurs
+            VoixCourses. placement="embed" a été tenté mais semble ne pas
+            rendre correctement, on revient au default (flottant). */}
         <section
           aria-label="Assistante vocale VoixCourses"
-          className="p-4 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--accent)]"
-          style={{ minHeight: "420px" }}
+          className="p-6 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--accent)] text-center"
         >
-          <ConvaiWidget
-            agent-id={AGENT_ID}
-            variant="expanded"
-            placement="embed"
-            dynamic-variables={dynamicVariables}
-            action-text="Parlez à l'assistante"
-            start-call-text="Démarrer la conversation"
-            end-call-text="Raccrocher"
-            listening-text="Je vous écoute…"
-            speaking-text="Je vous réponds…"
-            avatar-orb-color-1="#4cc9f0"
-            avatar-orb-color-2="#7ae0ff"
-          />
+          <div className="text-6xl mb-3" aria-hidden="true">
+            🎤
+          </div>
+          <h2 className="text-xl font-bold mb-2">
+            Parlez à Koraly, l&apos;assistante VoixCourses
+          </h2>
+          <p className="text-[var(--text-muted)] text-sm">
+            Cliquez sur la pastille bleue en bas à droite de l&apos;écran
+            pour commencer la conversation. Koraly vous guidera à la voix
+            pour constituer votre liste et remplir votre panier Carrefour.
+          </p>
         </section>
 
         {/* Contexte visible — aide l'utilisateur à vérifier avant de démarrer */}
@@ -504,13 +502,24 @@ export default function ConversationPageClient() {
 
       <Footer />
 
-      {/* Script du widget — chargé une fois côté client. Le custom element
-          <elevenlabs-convai> monté plus haut s'initialise quand le script
-          a fini d'enregistrer le web component. */}
+      {/* Widget ElevenLabs : pastille flottante bottom-right. Script chargé
+          en afterInteractive (juste après l'hydratation Next) pour que le
+          custom element soit interprété rapidement. */}
+      <ConvaiWidget
+        agent-id={AGENT_ID}
+        variant="expanded"
+        dynamic-variables={dynamicVariables}
+        action-text="Parler à Koraly"
+        start-call-text="Démarrer la conversation"
+        end-call-text="Raccrocher"
+        listening-text="Je vous écoute…"
+        speaking-text="Je vous réponds…"
+        avatar-orb-color-1="#4cc9f0"
+        avatar-orb-color-2="#7ae0ff"
+      />
       <Script
         src="https://unpkg.com/@elevenlabs/convai-widget-embed"
-        strategy="lazyOnload"
-        async
+        strategy="afterInteractive"
       />
     </>
   );
