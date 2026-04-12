@@ -13,26 +13,25 @@ const LIST_TTL_MS = 24 * 60 * 60 * 1000;
 const BANNER_ID = "voixcourses-banner";
 const POST_FILL_KEY = "voixcourses-just-filled";
 
-const { tts } = window.__voixcoursesTTS;
+const {
+  tts,
+  isExtensionAlive,
+  safeStorageGet,
+  safeStorageSet,
+  safeStorageRemove,
+} = window.__voixcoursesTTS;
 
-function getPendingList() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([STORAGE_KEY], (result) => {
-      const list = result[STORAGE_KEY];
-      if (!list) {
-        resolve(null);
-        return;
-      }
-      // TTL : au-delà, on considère la liste abandonnée. Nettoyage automatique
-      // pour éviter qu'une liste de la semaine dernière réapparaisse.
-      if (list.createdAt && Date.now() - list.createdAt > LIST_TTL_MS) {
-        chrome.storage.local.remove([STORAGE_KEY]);
-        resolve(null);
-        return;
-      }
-      resolve(list);
-    });
-  });
+async function getPendingList() {
+  const result = await safeStorageGet([STORAGE_KEY]);
+  const list = result[STORAGE_KEY];
+  if (!list) return null;
+  // TTL : au-delà, on considère la liste abandonnée. Nettoyage automatique
+  // pour éviter qu'une liste de la semaine dernière réapparaisse.
+  if (list.createdAt && Date.now() - list.createdAt > LIST_TTL_MS) {
+    safeStorageRemove([STORAGE_KEY]);
+    return null;
+  }
+  return list;
 }
 
 async function readCurrentCart() {
@@ -582,8 +581,8 @@ async function showBanner(list) {
       const successMsg = `Panier rempli. ${itemCount} produit${itemCount > 1 ? "s" : ""} pour ${total.toFixed(2)} euros. Redirection vers votre panier.`;
       status.textContent = successMsg;
       tts.speak(successMsg);
-      chrome.storage.local.remove([STORAGE_KEY]);
-      chrome.storage.local.set({ [POST_FILL_KEY]: { at: Date.now() } });
+      safeStorageRemove([STORAGE_KEY]);
+      safeStorageSet({ [POST_FILL_KEY]: { at: Date.now() } });
       setTimeout(() => {
         window.location.href = "/cart/driveclcv";
       }, 1800);
@@ -632,7 +631,7 @@ async function showBanner(list) {
   }
 
   dismissBtn.addEventListener("click", () => {
-    chrome.storage.local.remove([STORAGE_KEY]);
+    safeStorageRemove([STORAGE_KEY]);
     clearBodyOffset();
     banner.remove();
   });
@@ -711,12 +710,11 @@ async function announceCartPage() {
     location.pathname.includes("/mon-panier");
   if (!isCartPage) return;
 
-  const data = await new Promise((resolve) => {
-    chrome.storage.local.get([POST_FILL_KEY], (r) => resolve(r[POST_FILL_KEY]));
-  });
+  const result = await safeStorageGet([POST_FILL_KEY]);
+  const data = result[POST_FILL_KEY];
   if (!data) return;
 
-  chrome.storage.local.remove([POST_FILL_KEY]);
+  safeStorageRemove([POST_FILL_KEY]);
 
   const cart = await readCurrentCart();
   const auth = await checkAuth();
@@ -733,12 +731,14 @@ async function announceCartPage() {
 // 3. Sinon : voix OFF par défaut (respect de l'utilisateur qui consulte Carrefour
 //    pour ses propres raisons, pas via VoixCourses)
 (async () => {
+  // Si le contexte d'extension est mort (rechargé en dev pendant qu'un onglet
+  // était ouvert), on ne tente rien — les API chrome.* throw sinon.
+  if (!isExtensionAlive()) return;
+
   const api = window.__voixcoursesTTS;
   const list = await getPendingList();
   const hasPendingList = !!list;
 
-  // Si liste en attente : forcer voix ON, bypass anti-spam 30min → on doit parler.
-  // Sinon : respecter la préférence utilisateur mais ne pas greeter.
   if (hasPendingList) {
     api.installFocusSpeaker();
     api.installVoiceToggleShortcut();
@@ -748,36 +748,40 @@ async function announceCartPage() {
     });
     showBanner(list);
   } else {
-    // Pas de liste VoixCourses. On ne greet pas, on laisse la page Carrefour
-    // en paix. La voix reste ON ou OFF selon la préférence (lue au init du tts).
-    // Le focus speaker n'est PAS installé — sinon toute la nav Carrefour
-    // devient vocale, pénible quand non désiré.
-    const pref = await new Promise((r) =>
-      chrome.storage.local.get(["voixcourses-voice-enabled"], (v) =>
-        r(v["voixcourses-voice-enabled"])
-      )
-    );
+    const prefResult = await safeStorageGet(["voixcourses-voice-enabled"]);
+    const pref = prefResult["voixcourses-voice-enabled"];
     api.tts.enabled = pref === true; // OFF par défaut hors flux VoixCourses
     if (api.tts.enabled) {
-      // Utilisateur a explicitement activé — on installe le focus speaker
       api.installFocusSpeaker();
       api.installVoiceToggleShortcut();
     } else {
-      // Même si voix OFF, permettre V pour réactiver
       api.installVoiceToggleShortcut();
     }
     announceCartPage();
   }
 })();
 
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes[STORAGE_KEY]) {
-    const newList = changes[STORAGE_KEY].newValue;
-    const existing = document.getElementById(BANNER_ID);
-    if (existing) {
-      clearBodyOffset();
-      existing.remove();
-    }
-    if (newList) showBanner(newList);
+// Listener storage — protégé par try/catch : si l'extension est rechargée
+// pendant que le listener est en vie, chrome.storage.onChanged throw au lieu
+// de fire. Le try autour du addListener évite de casser le script entier.
+try {
+  if (isExtensionAlive() && chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      try {
+        if (area === "local" && changes[STORAGE_KEY]) {
+          const newList = changes[STORAGE_KEY].newValue;
+          const existing = document.getElementById(BANNER_ID);
+          if (existing) {
+            clearBodyOffset();
+            existing.remove();
+          }
+          if (newList) showBanner(newList);
+        }
+      } catch {
+        /* context invalidated — silencieux */
+      }
+    });
   }
-});
+} catch {
+  /* addListener peut throw si le context est déjà mort */
+}

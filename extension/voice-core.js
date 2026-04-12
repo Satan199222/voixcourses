@@ -9,6 +9,64 @@
   const VOICE_GREETED_KEY = "voixcourses-voice-greeted-at";
   const GREETING_WINDOW_MS = 30 * 60 * 1000;
 
+  /**
+   * Vérifie que le contexte d'extension est encore vivant.
+   *
+   * Quand l'extension est rechargée (dev) ou mise à jour, les content scripts
+   * continuent à tourner dans les onglets ouverts — mais `chrome.runtime.id`
+   * devient `undefined` et tout appel `chrome.storage.*` / `chrome.runtime.*`
+   * lève "Extension context invalidated". On check avant chaque appel pour
+   * éviter les throws visibles en console.
+   */
+  function isExtensionAlive() {
+    try {
+      return (
+        typeof chrome !== "undefined" &&
+        !!chrome.runtime &&
+        !!chrome.runtime.id
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /** Wrappers sûrs autour de chrome.storage.local — silencieux si le contexte
+   *  est mort, ce qui est attendu après un reload/update de l'extension. */
+  function safeStorageGet(keys) {
+    return new Promise((resolve) => {
+      if (!isExtensionAlive()) {
+        resolve({});
+        return;
+      }
+      try {
+        chrome.storage.local.get(keys, (res) => {
+          if (chrome.runtime?.lastError) resolve({});
+          else resolve(res || {});
+        });
+      } catch {
+        resolve({});
+      }
+    });
+  }
+
+  function safeStorageSet(obj) {
+    if (!isExtensionAlive()) return;
+    try {
+      chrome.storage.local.set(obj);
+    } catch {
+      /* swallow — extension context invalidated */
+    }
+  }
+
+  function safeStorageRemove(keys) {
+    if (!isExtensionAlive()) return;
+    try {
+      chrome.storage.local.remove(keys);
+    } catch {
+      /* swallow */
+    }
+  }
+
   const tts = {
     frenchVoice: null,
     voicesReady: false,
@@ -114,7 +172,7 @@
     setEnabled(enabled) {
       this.enabled = enabled;
       if (!enabled) this.cancel();
-      chrome.storage.local.set({ [VOICE_PREF_KEY]: enabled });
+      safeStorageSet({ [VOICE_PREF_KEY]: enabled });
     },
   };
 
@@ -147,6 +205,9 @@
     document.addEventListener(
       "focusin",
       (e) => {
+        // Si le contexte d'extension a été invalidé (rechargée en dev),
+        // on ne peut plus rien faire — les chrome.* throw. Sortie silencieuse.
+        if (!isExtensionAlive()) return;
         const target = e.target;
         if (!target || !(target instanceof HTMLElement)) return;
         if (target === document.body) return;
@@ -193,14 +254,10 @@
   async function greetIfNeeded(siteLabel, opts = {}) {
     const { forceVoiceOn = false, bypassWindow = false } = opts;
 
-    const pref = await new Promise((r) =>
-      chrome.storage.local.get([VOICE_PREF_KEY], (v) => r(v[VOICE_PREF_KEY]))
-    );
-    const lastGreet = await new Promise((r) =>
-      chrome.storage.local.get([VOICE_GREETED_KEY], (v) =>
-        r(v[VOICE_GREETED_KEY])
-      )
-    );
+    const prefResult = await safeStorageGet([VOICE_PREF_KEY]);
+    const greetResult = await safeStorageGet([VOICE_GREETED_KEY]);
+    const pref = prefResult[VOICE_PREF_KEY];
+    const lastGreet = greetResult[VOICE_GREETED_KEY];
 
     tts.enabled = forceVoiceOn ? true : pref !== false;
 
@@ -208,7 +265,7 @@
     if (!bypassWindow && lastGreet && now - lastGreet < GREETING_WINDOW_MS) {
       return;
     }
-    chrome.storage.local.set({ [VOICE_GREETED_KEY]: now });
+    safeStorageSet({ [VOICE_GREETED_KEY]: now });
 
     const greeting = `VoixCourses activé sur ${siteLabel}. Appuyez sur Entrée pour désactiver la voix, ou sur Tabulation pour continuer.`;
     tts.speak(greeting, { force: true });
@@ -247,6 +304,7 @@
     document.addEventListener(
       "keydown",
       (e) => {
+        if (!isExtensionAlive()) return;
         const active = document.activeElement;
         const isTyping =
           active &&
@@ -272,5 +330,11 @@
     installFocusSpeaker,
     greetIfNeeded,
     installVoiceToggleShortcut,
+    // Exposés pour content.js & autres scripts qui doivent lire le storage
+    // ou vérifier la vie du contexte d'extension.
+    isExtensionAlive,
+    safeStorageGet,
+    safeStorageSet,
+    safeStorageRemove,
   };
 })();
