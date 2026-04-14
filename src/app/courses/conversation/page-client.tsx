@@ -37,9 +37,10 @@ import type { CarrefourProduct, CarrefourStore } from "@/lib/carrefour/types";
  * fraîche grâce au ref pattern interne du SDK).
  */
 
-const AGENT_ID =
-  process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ||
-  "agent_5901kp17epppfa9rkqvdqfw0bh5p";
+/**
+ * L'agent ID n'est plus exposé côté client — on passe toujours par
+ * /api/agent/signed-url pour éviter le cross-tenant leak (GROA-194).
+ */
 
 interface AgentCartItem {
   ean: string;
@@ -399,7 +400,7 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
       last_order_days_ago: history.lastEntry
         ? String(
             Math.round(
-              // eslint-disable-next-line react-hooks/purity -- Date.now() dans useMemo, recalculé aux changements de lastEntry, précision "jours" suffisante pour l'agent
+               
               (Date.now() - new Date(history.lastEntry.at).getTime()) /
                 (24 * 60 * 60 * 1000)
             )
@@ -416,8 +417,19 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
     setToolEvents([]);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Récupère un signed URL server-side — l'agent ID reste secret (GROA-194)
+      const urlRes = await fetch("/api/agent/signed-url");
+      if (!urlRes.ok) {
+        const body = await urlRes.json().catch(() => ({}));
+        throw new Error(
+          (body as { error?: string }).error ?? `Erreur serveur (${urlRes.status})`
+        );
+      }
+      const { signedUrl } = (await urlRes.json()) as { signedUrl: string };
+
       await startSession({
-        agentId: AGENT_ID,
+        signedUrl,
         dynamicVariables,
         onMessage: (m: { message: string; source: string }) => {
           setMessages((prev) => [

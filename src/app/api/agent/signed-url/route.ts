@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit, clientKey, rateLimitHeaders } from "@/lib/rate-limit";
+import { getElevenLabsConfig } from "@/lib/elevenlabs/tenant-config";
 
 /**
  * Génère un signed URL ElevenLabs pour que le browser puisse se connecter
@@ -31,10 +32,12 @@ export async function GET(request: Request) {
     );
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_AGENT_ID;
-  if (!apiKey || !agentId) {
-    console.error("[agent] ELEVENLABS_API_KEY ou ELEVENLABS_AGENT_ID manquant");
+  let apiKey: string;
+  let agentId: string;
+  try {
+    ({ apiKey, agentId } = getElevenLabsConfig(request));
+  } catch (err) {
+    console.error("[agent] Config ElevenLabs manquante:", err);
     return NextResponse.json(
       { error: "Agent vocal non configuré sur le serveur." },
       { status: 500 }
