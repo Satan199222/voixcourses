@@ -2,8 +2,8 @@
 
 import { Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { AccessibilityBar } from "@/components/accessibility-bar";
-import { LiveRegion } from "@/components/live-region";
+import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
+import { LiveRegion } from "@/lib/shared/components/live-region";
 import { SiteHeader } from "@/components/site-header";
 import { StoreSelector } from "@/components/store-selector";
 import { GroceryInput } from "@/components/grocery-input";
@@ -15,10 +15,10 @@ import { InstallExtensionBanner } from "@/components/install-extension-banner";
 import { Onboarding } from "@/components/onboarding";
 import { Footer } from "@/components/footer";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
-import { useSpeech } from "@/lib/speech/use-speech";
-import { useFocusAnnounce } from "@/lib/speech/use-focus-announce";
-import { useLongTaskAnnounce } from "@/lib/speech/use-long-task-announce";
-import { useKeyboardShortcuts } from "@/lib/speech/use-keyboard-shortcuts";
+import { useSpeech } from "@/lib/shared/speech/use-speech";
+import { useFocusAnnounce } from "@/lib/shared/speech/use-focus-announce";
+import { useLongTaskAnnounce } from "@/lib/shared/speech/use-long-task-announce";
+import { useKeyboardShortcuts } from "@/lib/shared/speech/use-keyboard-shortcuts";
 import {
   usePreferences,
   SPEECH_RATE_VALUE,

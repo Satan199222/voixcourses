@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { KoralyOrb } from "./koraly-orb";
+import { KoralyOrb } from "@/lib/shared/components/koraly-orb";
 
 interface HeroSectionProps {
   onListenDemo?: () => void;
