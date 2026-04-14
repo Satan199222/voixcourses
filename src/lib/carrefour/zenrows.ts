@@ -79,6 +79,7 @@ export async function zenrowsFetch<T>(
   const res = await fetch(url, {
     method: options.method ?? "GET",
     headers: forwardHeaders,
+    signal: AbortSignal.timeout(8000),
     ...(options.body ? { body: options.body } : {}),
   });
 
@@ -130,6 +131,7 @@ export async function zenrowsFetchHtml(
       referer: `${CARREFOUR_ORIGIN}/`,
       ...options.headers,
     },
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!res.ok) {

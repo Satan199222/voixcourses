@@ -16,7 +16,7 @@ const RATE_MAX = 10;
 const RATE_WINDOW_MS = 60_000;
 
 export async function GET(request: Request) {
-  const rl = rateLimit(
+  const rl = await rateLimit(
     `agent-signed-url:${clientKey(request)}`,
     RATE_MAX,
     RATE_WINDOW_MS
@@ -46,6 +46,7 @@ export async function GET(request: Request) {
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
       {
         headers: { "xi-api-key": apiKey },
+        signal: AbortSignal.timeout(8000),
       }
     );
     if (!res.ok) {
