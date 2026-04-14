@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "VoixCourses",
+  "name": "VoixCourses (dev)",
   "version": "0.2.0",
   "description": "Assistant de courses accessible — transfère votre liste VoixCourses dans votre panier Carrefour.",
 
@@ -12,7 +12,9 @@
     "matches": [
       "https://voixcourses.fr/*",
       "https://*.voixcourses.fr/*",
-      "https://voixcourses.vercel.app/*"
+      "https://voixcourses.vercel.app/*",
+      "http://localhost:3000/*",
+      "http://127.0.0.1:3000/*"
     ]
   },
 
@@ -30,7 +32,9 @@
       "matches": [
         "https://voixcourses.fr/*",
         "https://*.voixcourses.fr/*",
-        "https://voixcourses.vercel.app/*"
+        "https://voixcourses.vercel.app/*",
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
       ],
       "js": ["voixcourses-marker.js"],
       "run_at": "document_start"
@@ -39,7 +43,9 @@
       "matches": [
         "https://voixcourses.fr/*",
         "https://*.voixcourses.fr/*",
-        "https://voixcourses.vercel.app/*"
+        "https://voixcourses.vercel.app/*",
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
       ],
       "js": ["voice-core.js", "voixcourses-voice.js"],
       "run_at": "document_idle"
