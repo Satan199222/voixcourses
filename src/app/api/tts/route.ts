@@ -4,6 +4,7 @@ import {
   clientKey,
   rateLimitHeaders,
 } from "@/lib/rate-limit";
+import { getElevenLabsConfig } from "@/lib/elevenlabs/tenant-config";
 
 /**
  * Stream ElevenLabs TTS vers le client.
@@ -64,9 +65,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
-    console.error("[tts] ELEVENLABS_API_KEY manquant");
+  let apiKey: string;
+  try {
+    ({ apiKey } = getElevenLabsConfig(request));
+  } catch (err) {
+    console.error("[tts] Config ElevenLabs manquante:", err);
     return NextResponse.json(
       { error: "TTS non configuré" },
       { status: 500 }
