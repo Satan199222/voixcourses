@@ -1,5 +1,5 @@
 /**
- * Cron — Génération automatique d'article de blog VoixCourses.
+ * Cron — Génération automatique d'article de blog Coraly.
  *
  * Schedule Vercel : 0 8 * * 3 (mercredi 8h UTC)
  * Déclenchement manuel : GET /api/cron/generate-blog
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         "sont gérés séparément). Introduction + 4-5 paragraphes + conclusion.",
         "Longueur cible : 600-800 mots.",
       ].join(" "),
-      prompt: `Rédige un article de blog complet sur le sujet : "${topic.title}"\n\nCatégorie : ${topic.category}\nOrganisation : VoixCourses (plateforme de formation vocale accessible pour malvoyants et non-voyants)\n\nL'article doit :\n- Apporter une valeur concrète aux apprenants déficients visuels ou malvoyants\n- Mentionner VoixCourses de façon naturelle (pas de publicité agressive)\n- Inclure des conseils pratiques ou exemples concrets\n- Être optimisé pour le référencement naturel (SEO)`,
+      prompt: `Rédige un article de blog complet sur le sujet : "${topic.title}"\n\nCatégorie : ${topic.category}\nOrganisation : Coraly (plateforme de formation vocale accessible pour malvoyants et non-voyants)\n\nL'article doit :\n- Apporter une valeur concrète aux apprenants déficients visuels ou malvoyants\n- Mentionner Coraly de façon naturelle (pas de publicité agressive)\n- Inclure des conseils pratiques ou exemples concrets\n- Être optimisé pour le référencement naturel (SEO)`,
     });
     generatedText = text;
   } catch (err) {
@@ -123,7 +123,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   //   topicSlug: topic.slug,
   //   category: topic.category,
   //   readingTimeMinutes: estimateReadingTime(generatedText),
-  //   organizationId: "voixcourses",
+  //   organizationId: "coraly",
   // });
 
   // Stub temporaire — log de ce qui serait publié
@@ -135,7 +135,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     bodyPreview: generatedText.substring(0, 300) + "…",
     readingTimeMinutes: estimateReadingTime(generatedText),
     isoWeek,
-    organizationId: "voixcourses",
+    organizationId: "coraly",
     status: "DRY_RUN — Sanity non configuré (attendre GROA-122)",
   };
 

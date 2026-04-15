@@ -323,7 +323,7 @@ export async function getReferralReward(
  */
 export function buildReferralLink(
   code: string,
-  baseUrl = "https://voixcourses.fr"
+  baseUrl = "https://coraly.fr"
 ): string {
   return `${baseUrl}/invitation/${encodeURIComponent(code)}`;
 }

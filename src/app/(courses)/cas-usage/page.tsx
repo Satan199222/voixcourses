@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer";
 import { HelpDialog } from "@/components/help-dialog";
 
 /**
- * Page /cas-usage — Landing page audiences cibles VoixCourses.
+ * Page /cas-usage — Landing page audiences cibles Coraly.
  *
  * Contenu approuvé par le Board (GROA-202 / approval 6a1942bb).
  * WCAG AAA : landmarks, heading order, contraste, aria-labels.
@@ -29,7 +29,7 @@ export default function CasUsagePage() {
           style={{ borderColor: "var(--border)" }}
         >
           <div className="max-w-[860px] mx-auto px-10">
-            <span className="vc-eyebrow">{"Cas d'usage · VoixCourses"}</span>
+            <span className="vc-eyebrow">{"Cas d'usage · Coraly"}</span>
             <h1
               id="cas-usage-title"
               className="vc-h1 mt-4 mb-6"
@@ -41,7 +41,7 @@ export default function CasUsagePage() {
               className="text-[19px] leading-[1.75] max-w-[640px]"
               style={{ color: "var(--text-soft)" }}
             >
-              {`VoixCourses a été pensé pour celles et ceux qui méritent une vraie aide — pas une interface qui décourage. Chaque fonctionnalité est conçue pour l'autonomie et l'indépendance.`}
+              {`Coraly a été pensé pour celles et ceux qui méritent une vraie aide — pas une interface qui décourage. Chaque fonctionnalité est conçue pour l'autonomie et l'indépendance.`}
             </p>
           </div>
         </section>
@@ -71,7 +71,7 @@ export default function CasUsagePage() {
             >
               Vous souhaitez maîtriser votre smartphone, découvrir de nouveaux
               loisirs ou rester connecté à ce qui vous intéresse&nbsp;?
-              VoixCourses vous propose des cours clairs, progressifs, que vous
+              Coraly vous propose des cours clairs, progressifs, que vous
               avancez à votre rythme — et que vous pouvez commander entièrement
               par la voix.
             </p>
@@ -79,7 +79,7 @@ export default function CasUsagePage() {
               className="text-[17px] leading-[1.8] max-w-[660px] mb-8"
               style={{ color: "var(--text-soft)" }}
             >
-              {`Pas besoin d'être à l'aise avec la technologie pour commencer. VoixCourses a été pensé pour celles et ceux qui méritent une vraie aide, pas une interface qui les décourage.`}
+              {`Pas besoin d'être à l'aise avec la technologie pour commencer. Coraly a été pensé pour celles et ceux qui méritent une vraie aide, pas une interface qui les décourage.`}
             </p>
             <Link
               href="/courses"
@@ -112,7 +112,7 @@ export default function CasUsagePage() {
               className="text-[17px] leading-[1.8] max-w-[660px] mb-4"
               style={{ color: "var(--text-soft)" }}
             >
-              {`Chez VoixCourses, l'accessibilité n'est pas une case à cocher\u00a0: c'est le point de départ. Chaque écran est conçu pour fonctionner avec un lecteur d'écran. La police Luciole, spécialement développée pour les personnes malvoyantes, est utilisée partout. Les contrastes dépassent les seuils WCAG AAA sur l'ensemble de l'interface.`}
+              {`Chez Coraly, l'accessibilité n'est pas une case à cocher\u00a0: c'est le point de départ. Chaque écran est conçu pour fonctionner avec un lecteur d'écran. La police Luciole, spécialement développée pour les personnes malvoyantes, est utilisée partout. Les contrastes dépassent les seuils WCAG AAA sur l'ensemble de l'interface.`}
             </p>
             <p
               className="text-[17px] leading-[1.8] max-w-[660px] mb-8"
@@ -157,7 +157,7 @@ export default function CasUsagePage() {
               className="text-[17px] leading-[1.8] max-w-[660px] mb-8"
               style={{ color: "var(--text-soft)" }}
             >
-              {`VoixCourses permet à votre proche d'avancer seul, à son rythme, sans avoir besoin de vous appeler à chaque étape. Simple à prendre en main, rassurant dans son utilisation, il est conçu pour que l'apprentissage reste une expérience positive et motivante.`}
+              {`Coraly permet à votre proche d'avancer seul, à son rythme, sans avoir besoin de vous appeler à chaque étape. Simple à prendre en main, rassurant dans son utilisation, il est conçu pour que l'apprentissage reste une expérience positive et motivante.`}
             </p>
             <Link
               href="/tarifs"

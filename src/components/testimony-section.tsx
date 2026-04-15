@@ -9,7 +9,7 @@ export function TestimonySection() {
       <div className="max-w-[1200px] mx-auto px-10 grid gap-16 items-center lg:grid-cols-2">
         <div>
           <span className="vc-eyebrow" style={{ color: "var(--brass)" }}>
-            Ils utilisent VoixCourses
+            Ils utilisent Coraly
           </span>
           <blockquote
             className="text-[28px] leading-[1.35] font-normal mt-6"
@@ -35,7 +35,7 @@ export function TestimonySection() {
         <div className="relative aspect-[4/5] rounded-xl overflow-hidden">
           <Image
             src="/images/femme-cuisine.jpg"
-            alt="Femme utilisant VoixCourses dans sa cuisine"
+            alt="Femme utilisant Coraly dans sa cuisine"
             fill
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 50vw"

@@ -1751,7 +1751,7 @@ Chaque SaaS possède **son propre projet Sanity isolé**. Pas de projet partagé
 |------|------------------|---------|
 | RideSamui | `ridesamui-blog` | `production` |
 | Megahote | `megahote-blog` | `production` |
-| VoixCourses | `voixcourses-blog` | `production` |
+| Coraly | `coraly-blog` | `production` |
 | Prono.pro | `pronopro-blog` | `production` |
 | ArchiCollab | `archicollab-blog` | `production` |
 | NameCheck Pro | `namecheck-blog` | `production` |

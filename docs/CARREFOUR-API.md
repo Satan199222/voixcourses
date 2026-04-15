@@ -1,6 +1,6 @@
 # API Carrefour.fr — Documentation Reverse Engineering
 
-> VoixCourses — Avril 2026
+> Coraly — Avril 2026
 > Testé et validé le 2026-04-11
 
 ## Prérequis : contournement Cloudflare

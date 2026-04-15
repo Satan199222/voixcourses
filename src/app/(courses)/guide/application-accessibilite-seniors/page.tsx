@@ -107,7 +107,7 @@ export default function AppAccessibiliteSeniorsPage() {
               className="text-[19px] leading-[1.75] max-w-[660px] mt-4"
               style={{ color: "var(--text-soft)" }}
             >
-              {`VoixCourses prend le contre-pied. Parce que chaque personne mérite d'accéder au savoir, sans que son âge ou ses capacités visuelles ne deviennent un obstacle.`}
+              {`Coraly prend le contre-pied. Parce que chaque personne mérite d'accéder au savoir, sans que son âge ou ses capacités visuelles ne deviennent un obstacle.`}
             </p>
           </div>
         </section>
@@ -200,14 +200,14 @@ export default function AppAccessibiliteSeniorsPage() {
               </ul>
             </section>
 
-            {/* Section 2 — Ce que VoixCourses change */}
+            {/* Section 2 — Ce que Coraly change */}
             <section aria-labelledby="section-changes">
               <h2
                 id="section-changes"
                 className="vc-h2 mb-6"
                 style={{ color: "var(--text)" }}
               >
-                Ce que VoixCourses change pour les seniors
+                Ce que Coraly change pour les seniors
               </h2>
 
               <div className="grid sm:grid-cols-2 gap-6">
@@ -225,7 +225,7 @@ export default function AppAccessibiliteSeniorsPage() {
                   {
                     title: "La voix comme boussole",
                     desc:
-                      "Vous ne savez pas où vous en êtes\u00a0? Demandez. VoixCourses vous guide, confirme vos actions, et répond à vos questions simples par la voix.",
+                      "Vous ne savez pas où vous en êtes\u00a0? Demandez. Coraly vous guide, confirme vos actions, et répond à vos questions simples par la voix.",
                   },
                   {
                     title: "Quatre thèmes d'affichage",
@@ -265,7 +265,7 @@ export default function AppAccessibiliteSeniorsPage() {
                 className="vc-h2 mb-6"
                 style={{ color: "var(--text)" }}
               >
-                Qui utilise VoixCourses&nbsp;?
+                Qui utilise Coraly&nbsp;?
               </h2>
 
               <div className="flex flex-col gap-5">
@@ -273,17 +273,17 @@ export default function AppAccessibiliteSeniorsPage() {
                   {
                     title: "Les seniors autonomes",
                     desc:
-                      "Vous avez envie d'apprendre, vous voulez avancer seul. VoixCourses est votre espace d'apprentissage, à vos conditions.",
+                      "Vous avez envie d'apprendre, vous voulez avancer seul. Coraly est votre espace d'apprentissage, à vos conditions.",
                   },
                   {
                     title: "Les personnes accompagnées",
                     desc:
-                      "Votre aidant, votre famille ou votre structure d'accompagnement peut configurer VoixCourses pour vous, puis vous laisser progresser en toute indépendance.",
+                      "Votre aidant, votre famille ou votre structure d'accompagnement peut configurer Coraly pour vous, puis vous laisser progresser en toute indépendance.",
                   },
                   {
                     title: "Les associations et EHPAD",
                     desc:
-                      "VoixCourses propose une offre Pro pour les structures qui souhaitent proposer la formation en ligne à leurs bénéficiaires, avec suivi des progrès et accompagnement à la prise en main.",
+                      "Coraly propose une offre Pro pour les structures qui souhaitent proposer la formation en ligne à leurs bénéficiaires, avec suivi des progrès et accompagnement à la prise en main.",
                   },
                 ].map((item) => (
                   <div

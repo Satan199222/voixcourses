@@ -1,4 +1,4 @@
-// Schéma Prisma — VoixCourses (mono-app)
+// Schéma Prisma — Coraly (mono-app)
 // DB : Neon PostgreSQL (branching par environnement)
 // URL configurée dans prisma.config.ts via DATABASE_URL
 

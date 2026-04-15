@@ -38,7 +38,7 @@ const FAQ_ITEMS = [
 ];
 
 /**
- * Page /tarifs — Landing page tarification VoixCourses.
+ * Page /tarifs — Landing page tarification Coraly.
  *
  * Contenu approuvé par le Board (GROA-202 / approval 6a1942bb).
  * WCAG AAA : landmarks, heading order, contraste, aria-labels.
@@ -59,7 +59,7 @@ export default function TarifsPage() {
           style={{ borderColor: "var(--border)" }}
         >
           <div className="max-w-[720px] mx-auto px-10 text-center">
-            <span className="vc-eyebrow">Tarifs · VoixCourses</span>
+            <span className="vc-eyebrow">Tarifs · Coraly</span>
             <h1
               id="tarifs-title"
               className="vc-h1 mt-4 mb-6"
@@ -71,7 +71,7 @@ export default function TarifsPage() {
               className="text-[19px] leading-[1.75] max-w-[560px] mx-auto"
               style={{ color: "var(--text-soft)" }}
             >
-              {`L'apprentissage en ligne ne devrait pas être une question de budget. C'est pourquoi VoixCourses est gratuit pour toute personne qui apprend seule.`}
+              {`L'apprentissage en ligne ne devrait pas être une question de budget. C'est pourquoi Coraly est gratuit pour toute personne qui apprend seule.`}
             </p>
           </div>
         </section>
@@ -208,7 +208,7 @@ export default function TarifsPage() {
                 </p>
 
                 <a
-                  href="mailto:pro@voixcourses.fr"
+                  href="mailto:pro@coraly.fr"
                   className="block w-full text-center py-4 rounded-lg text-[16px] font-bold border-2 transition-opacity hover:opacity-90 focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] focus:ring-offset-2"
                   style={{ borderColor: "var(--brass)", color: "var(--brass)", background: "transparent" }}
                 >

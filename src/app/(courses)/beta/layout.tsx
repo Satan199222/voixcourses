@@ -3,30 +3,30 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Accès bêta",
   description:
-    "Rejoignez les bêta-testeurs VoixCourses. Testez l'application de courses vocale avant son lancement public et contribuez à rendre le numérique plus accessible.",
+    "Rejoignez les bêta-testeurs Coraly. Testez l'application de courses vocale avant son lancement public et contribuez à rendre le numérique plus accessible.",
   alternates: {
     canonical: "/beta",
   },
   openGraph: {
     type: "website",
-    title: "Accès bêta — VoixCourses",
+    title: "Accès bêta — Coraly",
     description:
-      "Rejoignez les bêta-testeurs VoixCourses. Testez l'application de courses vocale avant son lancement public.",
+      "Rejoignez les bêta-testeurs Coraly. Testez l'application de courses vocale avant son lancement public.",
     url: "/beta",
     images: [
       {
         url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "VoixCourses — Accès bêta prioritaire",
+        alt: "Coraly — Accès bêta prioritaire",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Accès bêta — VoixCourses",
+    title: "Accès bêta — Coraly",
     description:
-      "Rejoignez les bêta-testeurs VoixCourses. Testez l'application de courses vocale avant son lancement public.",
+      "Rejoignez les bêta-testeurs Coraly. Testez l'application de courses vocale avant son lancement public.",
     images: ["/images/og-default.jpg"],
   },
 };

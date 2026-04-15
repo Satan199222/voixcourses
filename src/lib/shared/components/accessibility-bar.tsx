@@ -79,17 +79,17 @@ export function AccessibilityBar({
 }: AccessibilityBarProps = {}) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "clair";
-    const saved = safeLocalGet("voixcourses-theme");
+    const saved = safeLocalGet("coraly-theme");
     return isTheme(saved) ? saved : "clair";
   });
   const [fontSize, setFontSize] = useState<string>(() => {
     if (typeof window === "undefined") return "18px";
-    return safeLocalGet("voixcourses-font-size") || "18px";
+    return safeLocalGet("coraly-font-size") || "18px";
   });
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
-    const saved = safeLocalGet("voixcourses-voice-enabled");
+    const saved = safeLocalGet("coraly-voice-enabled");
     return saved === null ? true : saved === "true";
   });
 
@@ -107,12 +107,12 @@ export function AccessibilityBar({
     const root = document.documentElement;
     root.classList.remove("theme-sombre", "theme-jaune-noir", "theme-blanc-bleu");
     if (theme !== "clair") root.classList.add(`theme-${theme}`);
-    safeLocalSet("voixcourses-theme", theme);
+    safeLocalSet("coraly-theme", theme);
   }, [theme]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--font-size-base", fontSize);
-    safeLocalSet("voixcourses-font-size", fontSize);
+    safeLocalSet("coraly-font-size", fontSize);
   }, [fontSize]);
 
   function toggleDiet(d: DietaryRestriction) {
@@ -216,7 +216,7 @@ export function AccessibilityBar({
           onClick={() => {
             const next = !voiceEnabled;
             setVoiceEnabled(next);
-            safeLocalSet("voixcourses-voice-enabled", String(next));
+            safeLocalSet("coraly-voice-enabled", String(next));
             onVoiceToggle?.(next);
           }}
           suppressHydrationWarning
@@ -235,7 +235,7 @@ export function AccessibilityBar({
           <span
             className="shrink-0 px-3 rounded-lg text-sm font-bold"
             style={{ height: 52, display: "inline-flex", alignItems: "center", background: "var(--brass)", color: "var(--accent-ink)" }}
-            aria-label={`Extension VoixCourses version ${extension.version} détectée`}
+            aria-label={`Extension Coraly version ${extension.version} détectée`}
             title={`Extension v${extension.version}`}
           >
             ✓ Extension

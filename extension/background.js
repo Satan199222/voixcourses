@@ -1,11 +1,11 @@
 /**
- * Service worker de l'extension VoixCourses.
+ * Service worker de l'extension Coraly.
  *
- * Rôle : recevoir une liste depuis voixcourses.fr (via externally_connectable),
+ * Rôle : recevoir une liste depuis coraly.fr (via externally_connectable),
  * la stocker, et ouvrir un onglet carrefour.fr où content.js prendra le relais.
  */
 
-const STORAGE_KEY = "voixcourses-pending-list";
+const STORAGE_KEY = "coraly-pending-list";
 
 /**
  * Met à jour le badge sur l'icône de l'extension.
@@ -26,11 +26,11 @@ function updateBadge(list) {
     chrome.action.setBadgeText({ text: String(count) });
     chrome.action.setBadgeBackgroundColor({ color: "#4cc9f0" });
     chrome.action.setTitle({
-      title: `VoixCourses — ${count} produit${count > 1 ? "s" : ""} en attente. Cliquez pour ouvrir Carrefour.`,
+      title: `Coraly — ${count} produit${count > 1 ? "s" : ""} en attente. Cliquez pour ouvrir Carrefour.`,
     });
   } else {
     chrome.action.setBadgeText({ text: "" });
-    chrome.action.setTitle({ title: "VoixCourses — aucune liste en attente" });
+    chrome.action.setTitle({ title: "Coraly — aucune liste en attente" });
   }
 }
 
@@ -47,7 +47,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 /**
- * Écoute les messages venant de voixcourses.fr.
+ * Écoute les messages venant de coraly.fr.
  * Messages acceptés :
  * - { type: "PING" } → répond { installed: true, version }
  * - { type: "SET_LIST", payload: { storeRef, basketServiceId, eans, title? } }

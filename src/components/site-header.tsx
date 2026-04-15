@@ -6,7 +6,7 @@ interface SiteHeaderProps {
 }
 
 /**
- * Header commun à toutes les pages : logo "VoixCourses. par Koraly" + nav.
+ * Header commun à toutes les pages : logo "Coraly. par Koraly" + nav.
  * S'adapte automatiquement aux 4 thèmes via var(--text), var(--brass), etc.
  */
 export function SiteHeader({ compact = false }: SiteHeaderProps = {}) {
@@ -17,7 +17,7 @@ export function SiteHeader({ compact = false }: SiteHeaderProps = {}) {
     >
       <Link href="/" className="flex items-baseline gap-3.5 no-underline" style={{ color: "var(--text)" }}>
         <span className="text-2xl font-bold" style={{ letterSpacing: "-0.6px" }}>
-          VoixCourses
+          Coraly
         </span>
         <span style={{ color: "var(--brass)", fontSize: 28, lineHeight: 1, marginLeft: -2 }}>.</span>
         <span

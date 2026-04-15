@@ -31,14 +31,14 @@ describe("getElevenLabsConfig", () => {
 
   it("retourne la config tenant spécifique quand le host est mappé", () => {
     process.env.ELEVENLABS_HOSTNAME_MAP = JSON.stringify({
-      "tenant-a.voixcourses.com": "tenanta",
+      "tenant-a.coraly.com": "tenanta",
     });
     process.env.ELEVENLABS_TENANT_TENANTA_API_KEY = "key-tenanta";
     process.env.ELEVENLABS_TENANT_TENANTA_AGENT_ID = "agent-tenanta";
     process.env.ELEVENLABS_API_KEY = "key-default";
     process.env.ELEVENLABS_AGENT_ID = "agent-default";
 
-    const config = getElevenLabsConfig(makeRequest("tenant-a.voixcourses.com"));
+    const config = getElevenLabsConfig(makeRequest("tenant-a.coraly.com"));
     expect(config.apiKey).toBe("key-tenanta");
     expect(config.agentId).toBe("agent-tenanta");
     expect(config.tenantId).toBe("tenanta");
@@ -74,13 +74,13 @@ describe("getElevenLabsConfig", () => {
 
   it("fallback sur les vars par défaut si les vars tenant sont absentes", () => {
     process.env.ELEVENLABS_HOSTNAME_MAP = JSON.stringify({
-      "tenant-b.voixcourses.com": "tenantb",
+      "tenant-b.coraly.com": "tenantb",
     });
     // Pas de ELEVENLABS_TENANT_TENANTB_API_KEY — fallback sur défaut
     process.env.ELEVENLABS_API_KEY = "key-default";
     process.env.ELEVENLABS_AGENT_ID = "agent-default";
 
-    const config = getElevenLabsConfig(makeRequest("tenant-b.voixcourses.com"));
+    const config = getElevenLabsConfig(makeRequest("tenant-b.coraly.com"));
     expect(config.apiKey).toBe("key-default");
     expect(config.agentId).toBe("agent-default");
     expect(config.tenantId).toBe("tenantb");

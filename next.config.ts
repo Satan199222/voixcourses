@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
  *
  * - Strict-Transport-Security : force HTTPS pendant 2 ans (HSTS preload-ready).
  * - X-Content-Type-Options : bloque le MIME-sniffing.
- * - X-Frame-Options : interdit que VoixCourses soit iframé (clickjacking).
+ * - X-Frame-Options : interdit que Coraly soit iframé (clickjacking).
  * - Referrer-Policy : ne fuite que l'origine, pas la query complète.
  * - Permissions-Policy : coupe les API sensibles qu'on n'utilise pas.
  *   On garde `microphone` explicite car la dictée en a besoin.

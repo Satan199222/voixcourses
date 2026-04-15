@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "VoixCourses",
+  "name": "Coraly",
   "version": "0.2.0",
-  "description": "Assistant de courses accessible — transfère votre liste VoixCourses dans votre panier Carrefour.",
+  "description": "Assistant de courses accessible — transfère votre liste Coraly dans votre panier Carrefour.",
 
   "permissions": ["storage", "tabs"],
 
@@ -10,9 +10,9 @@
 
   "externally_connectable": {
     "matches": [
-      "https://voixcourses.fr/*",
-      "https://*.voixcourses.fr/*",
-      "https://voixcourses.vercel.app/*"
+      "https://coraly.fr/*",
+      "https://*.coraly.fr/*",
+      "https://coraly.vercel.app/*"
     ]
   },
 
@@ -28,27 +28,27 @@
     },
     {
       "matches": [
-        "https://voixcourses.fr/*",
-        "https://*.voixcourses.fr/*",
-        "https://voixcourses.vercel.app/*"
+        "https://coraly.fr/*",
+        "https://*.coraly.fr/*",
+        "https://coraly.vercel.app/*"
       ],
-      "js": ["voixcourses-marker.js"],
+      "js": ["coraly-marker.js"],
       "run_at": "document_start"
     },
     {
       "matches": [
-        "https://voixcourses.fr/*",
-        "https://*.voixcourses.fr/*",
-        "https://voixcourses.vercel.app/*"
+        "https://coraly.fr/*",
+        "https://*.coraly.fr/*",
+        "https://coraly.vercel.app/*"
       ],
-      "js": ["voice-core.js", "voixcourses-voice.js"],
+      "js": ["voice-core.js", "coraly-voice.js"],
       "run_at": "document_idle"
     }
   ],
 
   "action": {
     "default_popup": "popup.html",
-    "default_title": "VoixCourses",
+    "default_title": "Coraly",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

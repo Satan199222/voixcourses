@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useWelcomeAudio } from "./use-welcome-audio";
 
-const SESSION_KEY = "voixcourses-welcome-played";
+const SESSION_KEY = "coraly-welcome-played";
 
 beforeEach(() => {
   vi.useFakeTimers();

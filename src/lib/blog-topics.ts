@@ -1,9 +1,9 @@
 /**
- * Blog topics pool — 30 sujets FR pour le blog auto-généré VoixCourses.
+ * Blog topics pool — 30 sujets FR pour le blog auto-généré Coraly.
  * Rotation par semaine ISO : chaque mercredi, le cron choisit le sujet
  * correspondant à (isoWeek - 1) % BLOG_TOPICS.length.
  *
- * Référence : GROA-125 — Blog auto-généré VoixCourses (impl. Sanity + cron)
+ * Référence : GROA-125 — Blog auto-généré Coraly (impl. Sanity + cron)
  */
 
 export interface BlogTopic {

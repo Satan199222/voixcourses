@@ -7,9 +7,9 @@ import {
   type BrowserInfo,
 } from "@/lib/extension/browser-detection";
 
-const DISMISS_KEY = "voixcourses-install-banner-dismissed-at";
+const DISMISS_KEY = "coraly-install-banner-dismissed-at";
 /** Le banner réapparaît après ce délai (sinon jamais) — on ne veut pas
- *  l'imposer chaque visite, mais un utilisateur qui découvre VoixCourses
+ *  l'imposer chaque visite, mais un utilisateur qui découvre Coraly
  *  n'installe pas toujours dès la 1ʳᵉ fois. 7 jours semblent raisonnables. */
 const REMIND_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -56,7 +56,7 @@ export function InstallExtensionBanner() {
     return (
       <aside
         role="region"
-        aria-label="Information extension VoixCourses"
+        aria-label="Information extension Coraly"
         className="p-4 rounded-lg border-2 border-[var(--border)] bg-[var(--bg-surface)] flex items-start gap-3"
       >
         <span aria-hidden className="text-2xl shrink-0">ℹ️</span>
@@ -81,7 +81,7 @@ export function InstallExtensionBanner() {
   return (
     <aside
       role="region"
-      aria-label="Installer l'extension VoixCourses"
+      aria-label="Installer l'extension Coraly"
       className="p-4 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] flex flex-col sm:flex-row items-start gap-3"
     >
       <span aria-hidden className="text-2xl shrink-0">⚡</span>

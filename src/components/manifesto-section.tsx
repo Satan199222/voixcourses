@@ -54,7 +54,7 @@ export function ManifestoSection() {
             </div>
             <div className="mt-2 text-[15px] leading-[1.5]" style={{ color: "var(--text-soft)" }}>
               personnes déficientes visuelles en France dont{" "}
-              <strong>207 000 aveugles</strong>. VoixCourses leur rend l&apos;autonomie des
+              <strong>207 000 aveugles</strong>. Coraly leur rend l&apos;autonomie des
               courses en ligne.
             </div>
           </div>

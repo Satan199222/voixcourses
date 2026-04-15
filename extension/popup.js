@@ -1,14 +1,14 @@
 /**
- * Popup de l'extension (clic sur l'icône VoixCourses).
+ * Popup de l'extension (clic sur l'icône Coraly).
  *
  * Utile quand :
- * - Aucune liste : propose d'ouvrir voixcourses.fr (raccourci pour l'utilisateur)
+ * - Aucune liste : propose d'ouvrir coraly.fr (raccourci pour l'utilisateur)
  * - Liste présente : affiche le détail complet + ouvre Carrefour ou supprime
  */
 
-// URL canonique de l'app web. Pour l'instant voixcourses.vercel.app (MVP),
-// remplacer par https://voixcourses.fr quand le domaine sera configuré.
-const WEB_APP_URL = "https://voixcourses.vercel.app";
+// URL canonique de l'app web. Pour l'instant coraly.vercel.app (MVP),
+// remplacer par https://coraly.fr quand le domaine sera configuré.
+const WEB_APP_URL = "https://coraly.vercel.app";
 
 function el(tag, options = {}) {
   const e = document.createElement(tag);
@@ -44,13 +44,13 @@ function render(list) {
     const p1 = el("p", { text: "Aucune liste en attente." });
     const p2 = el("p", { className: "muted" });
     p2.textContent =
-      "Créez votre liste sur VoixCourses, puis envoyez-la vers l'extension.";
+      "Créez votre liste sur Coraly, puis envoyez-la vers l'extension.";
 
     const openAppBtn = el("button", {
-      text: "Ouvrir VoixCourses",
+      text: "Ouvrir Coraly",
       attrs: {
         type: "button",
-        "aria-label": "Ouvrir le site VoixCourses dans un nouvel onglet",
+        "aria-label": "Ouvrir le site Coraly dans un nouvel onglet",
       },
     });
     openAppBtn.addEventListener("click", () => {
@@ -118,11 +118,11 @@ function render(list) {
   });
 
   const editBtn = el("button", {
-    text: "Modifier sur VoixCourses",
+    text: "Modifier sur Coraly",
     attrs: {
       type: "button",
       "aria-label":
-        "Retourner sur VoixCourses pour modifier la liste avant de remplir le panier",
+        "Retourner sur Coraly pour modifier la liste avant de remplir le panier",
     },
   });
   editBtn.style.background = "transparent";

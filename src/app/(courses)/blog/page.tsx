@@ -17,13 +17,13 @@ const CATEGORY_LABELS: Record<SanityPost["category"], string> = {
 };
 
 /**
- * Page /blog — Liste des articles auto-générés VoixCourses.
+ * Page /blog — Liste des articles auto-générés Coraly.
  *
  * Les données proviennent de Sanity (stub vide jusqu'à GROA-122).
  * WCAG AAA : heading order, contraste, aria-labels.
  */
 export default function BlogPage() {
-  useDocumentTitle("Blog — VoixCourses");
+  useDocumentTitle("Blog — Coraly");
 
   const [helpOpen, setHelpOpen] = useState(false);
   const [posts, setPosts] = useState<SanityPost[]>([]);

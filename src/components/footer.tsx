@@ -10,12 +10,12 @@ const COL_A11Y = [
   { label: "Déclaration de conformité", href: "/accessibilite" },
   { label: "Raccourcis clavier", href: "/accessibilite#raccourcis" },
   { label: "Police Luciole", href: "https://www.luciole-vision.com/", external: true },
-  { label: "Signaler un problème", href: "mailto:contact@voixcourses.fr" },
+  { label: "Signaler un problème", href: "mailto:contact@coraly.fr" },
 ];
 const COL_COMPANY = [
   { label: "À propos", href: "/a-propos" },
   { label: "Presse", href: "/presse" },
-  { label: "Contact", href: "mailto:contact@voixcourses.fr" },
+  { label: "Contact", href: "mailto:contact@coraly.fr" },
   { label: "Partenaires enseignes", href: "/b2b" },
 ];
 
@@ -37,7 +37,7 @@ export function Footer() {
               className="text-2xl font-bold flex items-baseline gap-3.5"
               style={{ letterSpacing: "-0.6px" }}
             >
-              <span>VoixCourses</span>
+              <span>Coraly</span>
               <span style={{ color: "var(--brass)", fontSize: "26px", lineHeight: 1 }}>.</span>
               <span
                 className="pl-3.5 border-l text-[12px] font-semibold uppercase"
@@ -67,7 +67,7 @@ export function Footer() {
           className="pt-7 border-t flex justify-between items-center flex-wrap gap-4 text-[14px]"
           style={{ borderColor: "rgba(244,238,227,0.1)", color: "rgba(244,238,227,0.65)" }}
         >
-          <div>VoixCourses · 2026 · Moselle, France</div>
+          <div>Coraly · 2026 · Moselle, France</div>
           <div className="inline-flex items-center gap-2.5 flex-wrap">
             <span
               className="px-2.5 py-1 border rounded text-[12px] font-bold tracking-[1px]"

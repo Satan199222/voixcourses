@@ -15,7 +15,7 @@
 
 ---
 
-# VoixCourses — Conventions projet
+# Coraly — Conventions projet
 
 ## Stack
 

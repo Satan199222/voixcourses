@@ -9,7 +9,7 @@ describe("renderEmailTemplate — bienvenue-j0", () => {
     });
 
     expect(subject).toBe(
-      "Bienvenue sur VoixCourses — faites vos courses sans les mains"
+      "Bienvenue sur Coraly — faites vos courses sans les mains"
     );
     expect(html).toContain("Marie");
     expect(html).not.toContain("[PRENOM]");
@@ -87,7 +87,7 @@ describe("renderEmailTemplate — referral-j7", () => {
     });
 
     expect(subject).toBe(
-      "Quelqu'un de votre entourage pourrait bénéficier de VoixCourses"
+      "Quelqu'un de votre entourage pourrait bénéficier de Coraly"
     );
     expect(html).toContain("Pierre");
     expect(html).not.toContain("[PRENOM]");

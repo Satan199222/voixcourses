@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 
 /**
- * Sitemap dynamique VoixCourses — Next.js App Router.
+ * Sitemap dynamique Coraly — Next.js App Router.
  * Les articles de blog sont découverts dynamiquement via Sanity.
  * En cas d'échec Sanity, on retourne uniquement les routes statiques.
  */

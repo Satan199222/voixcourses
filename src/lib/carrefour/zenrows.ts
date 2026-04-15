@@ -145,5 +145,5 @@ export async function zenrowsFetchHtml(
  * set-store entre search/cart/slots.
  */
 export function sessionForStore(storeRef: string): string {
-  return `voixcourses-${storeRef}`;
+  return `coraly-${storeRef}`;
 }

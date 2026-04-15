@@ -1,8 +1,8 @@
-# VoixCourses Redesign — Implementation Plan
+# Coraly Redesign — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Appliquer la direction visuelle Marine éditorial (spec `docs/superpowers/specs/2026-04-12-voixcourses-design.md`) à l'ensemble du produit : refactor des tokens globaux, ajout de la police Luciole, reconstruction de la home, mise à niveau uniforme des pages `/courses`, `/courses/conversation`, `/installer`.
+**Goal:** Appliquer la direction visuelle Marine éditorial (spec `docs/superpowers/specs/2026-04-12-coraly-design.md`) à l'ensemble du produit : refactor des tokens globaux, ajout de la police Luciole, reconstruction de la home, mise à niveau uniforme des pages `/courses`, `/courses/conversation`, `/installer`.
 
 **Architecture :** Le codebase utilise déjà des CSS custom properties (`var(--bg)`, `var(--text)`, etc.) consommées partout. On change donc les tokens au niveau `globals.css` (effet global immédiat), on charge Luciole via `next/font/local`, on reconstruit la home en sections modulaires, puis on harmonise les autres pages en leur apposant les composants partagés (SiteHeader, Footer refondu, AccessibilityBar simplifiée).
 
@@ -127,7 +127,7 @@ import { THEME_INIT_SCRIPT } from "./theme-init";
 import { luciole } from "@/lib/fonts";
 
 export const metadata: Metadata = {
-  title: "VoixCourses — Vos courses par la voix",
+  title: "Coraly — Vos courses par la voix",
   description:
     "Faites vos courses en ligne par la voix. Dictez, Koraly compose votre panier. Accessible aux non-voyants, malvoyants et seniors.",
 };
@@ -188,8 +188,8 @@ git commit -m "feat(design): charger Luciole via next/font/local"
 @source "../**/*.{ts,tsx}";
 
 /* =============================================================
-   VOIXCOURSES — DESIGN SYSTEM "MARINE ÉDITORIAL"
-   Réf : docs/superpowers/specs/2026-04-12-voixcourses-design.md
+   CORALY — DESIGN SYSTEM "MARINE ÉDITORIAL"
+   Réf : docs/superpowers/specs/2026-04-12-coraly-design.md
    ============================================================= */
 
 /* -- Thème Clair (défaut) ----------------------------------- */
@@ -439,14 +439,14 @@ git commit -m "feat(design): palette Marine éditorial + 4 thèmes + base 18px"
 export const THEME_INIT_SCRIPT = `
 (function() {
   try {
-    var t = localStorage.getItem('voixcourses-theme');
+    var t = localStorage.getItem('coraly-theme');
     if (t === 'sombre' || t === 'jaune-noir' || t === 'blanc-bleu') {
       document.documentElement.classList.add('theme-' + t);
     }
-    var s = localStorage.getItem('voixcourses-font-size') || '18px';
+    var s = localStorage.getItem('coraly-font-size') || '18px';
     document.documentElement.style.setProperty('--font-size-base', s);
-    if (!localStorage.getItem('voixcourses-font-size')) {
-      localStorage.setItem('voixcourses-font-size', '18px');
+    if (!localStorage.getItem('coraly-font-size')) {
+      localStorage.setItem('coraly-font-size', '18px');
     }
   } catch (e) {}
 })();
@@ -533,15 +533,15 @@ export function AccessibilityBar({
 }: AccessibilityBarProps = {}) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "clair";
-    return (localStorage.getItem("voixcourses-theme") as Theme) || "clair";
+    return (localStorage.getItem("coraly-theme") as Theme) || "clair";
   });
   const [fontSize, setFontSize] = useState<string>(() => {
     if (typeof window === "undefined") return "18px";
-    return localStorage.getItem("voixcourses-font-size") || "18px";
+    return localStorage.getItem("coraly-font-size") || "18px";
   });
   const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("voixcourses-voice-enabled");
+    const saved = localStorage.getItem("coraly-voice-enabled");
     return saved === null ? true : saved === "true";
   });
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -554,16 +554,16 @@ export function AccessibilityBar({
     const root = document.documentElement;
     root.classList.remove("theme-sombre", "theme-jaune-noir", "theme-blanc-bleu");
     if (theme !== "clair") root.classList.add(`theme-${theme}`);
-    localStorage.setItem("voixcourses-theme", theme);
+    localStorage.setItem("coraly-theme", theme);
   }, [theme]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--font-size-base", fontSize);
-    localStorage.setItem("voixcourses-font-size", fontSize);
+    localStorage.setItem("coraly-font-size", fontSize);
   }, [fontSize]);
 
   useEffect(() => {
-    localStorage.setItem("voixcourses-voice-enabled", String(voiceEnabled));
+    localStorage.setItem("coraly-voice-enabled", String(voiceEnabled));
     onVoiceToggle?.(voiceEnabled);
   }, [voiceEnabled, onVoiceToggle]);
 
@@ -757,12 +757,12 @@ const COL_A11Y = [
   { label: "Déclaration de conformité", href: "/accessibilite" },
   { label: "Raccourcis clavier", href: "/accessibilite#raccourcis" },
   { label: "Police Luciole", href: "https://www.luciole-vision.com/", external: true },
-  { label: "Signaler un problème", href: "mailto:contact@voixcourses.fr" },
+  { label: "Signaler un problème", href: "mailto:contact@coraly.fr" },
 ];
 const COL_COMPANY = [
   { label: "À propos", href: "/a-propos" },
   { label: "Presse", href: "/presse" },
-  { label: "Contact", href: "mailto:contact@voixcourses.fr" },
+  { label: "Contact", href: "mailto:contact@coraly.fr" },
   { label: "Partenaires enseignes", href: "/b2b" },
 ];
 
@@ -777,7 +777,7 @@ export function Footer() {
         <div className="grid gap-12 mb-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
             <div className="text-2xl font-bold flex items-baseline gap-3.5" style={{ letterSpacing: "-0.6px" }}>
-              <span>VoixCourses</span>
+              <span>Coraly</span>
               <span style={{ color: "var(--brass)", fontSize: "26px", lineHeight: 1 }}>.</span>
               <span
                 className="pl-3.5 border-l text-[12px] font-semibold uppercase"
@@ -797,7 +797,7 @@ export function Footer() {
           className="pt-7 border-t flex justify-between items-center flex-wrap gap-4 text-[14px]"
           style={{ borderColor: "rgba(244,238,227,0.1)", color: "rgba(244,238,227,0.65)" }}
         >
-          <div>VoixCourses · 2026 · Moselle, France</div>
+          <div>Coraly · 2026 · Moselle, France</div>
           <div className="inline-flex items-center gap-2.5 flex-wrap">
             <span className="px-2.5 py-1 border rounded text-[12px] font-bold tracking-[1px]" style={{ borderColor: "rgba(181,136,66,0.5)", color: "var(--brass)" }}>RGAA AAA</span>
             <span className="px-2.5 py-1 border rounded text-[12px] font-bold tracking-[1px]" style={{ borderColor: "rgba(181,136,66,0.5)", color: "var(--brass)" }}>EAA 2025</span>
@@ -866,7 +866,7 @@ export function SiteHeader({ compact = false }: SiteHeaderProps = {}) {
       style={{ borderColor: "var(--border)", color: "var(--text)" }}
     >
       <Link href="/" className="flex items-baseline gap-3.5 no-underline" style={{ color: "var(--text)" }}>
-        <span className="text-2xl font-bold" style={{ letterSpacing: "-0.6px" }}>VoixCourses</span>
+        <span className="text-2xl font-bold" style={{ letterSpacing: "-0.6px" }}>Coraly</span>
         <span style={{ color: "var(--brass)", fontSize: "28px", lineHeight: 1, marginLeft: "-2px" }}>.</span>
         <span
           className="pl-3.5 border-l text-[12px] font-semibold uppercase"
@@ -1364,7 +1364,7 @@ export function ManifestoSection() {
           <div className="mt-9 p-6 rounded-r-lg" style={{ background: "var(--bg-card)", borderLeft: "4px solid var(--brass)" }}>
             <div className="text-5xl font-bold leading-none" style={{ color: "var(--accent)", letterSpacing: "-1.5px" }}>1,7 M</div>
             <div className="mt-2 text-[15px] leading-[1.5]" style={{ color: "var(--text-soft)" }}>
-              personnes déficientes visuelles en France dont <strong>207 000 aveugles</strong>. VoixCourses leur rend l&apos;autonomie des courses en ligne.
+              personnes déficientes visuelles en France dont <strong>207 000 aveugles</strong>. Coraly leur rend l&apos;autonomie des courses en ligne.
             </div>
           </div>
         </div>
@@ -1507,7 +1507,7 @@ export function TestimonySection() {
     <section className="py-24 lg:py-28" style={{ background: "var(--accent-ink)", color: "var(--bg)" }}>
       <div className="max-w-[1200px] mx-auto px-10 grid gap-16 items-center lg:grid-cols-2">
         <div>
-          <span className="vc-eyebrow" style={{ color: "var(--brass)" }}>Ils utilisent VoixCourses</span>
+          <span className="vc-eyebrow" style={{ color: "var(--brass)" }}>Ils utilisent Coraly</span>
           <blockquote className="text-[28px] leading-[1.35] font-normal mt-6" style={{ letterSpacing: "-0.4px" }}>
             <Quote />
             Avant, je devais attendre ma fille pour faire les courses le samedi. Maintenant je les fais seule, en trois minutes, quand je veux. J&apos;ai retrouvé un pan entier de mon autonomie.
@@ -1601,7 +1601,7 @@ Expected : FAIL, module introuvable.
 const FAQS = [
   {
     q: "Faut-il installer quelque chose ?",
-    a: "Non. VoixCourses fonctionne dans votre navigateur. Pour certaines enseignes, une extension Chrome optionnelle améliore la finalisation du panier — son installation se fait en un clic, et elle est elle-même accessible au clavier.",
+    a: "Non. Coraly fonctionne dans votre navigateur. Pour certaines enseignes, une extension Chrome optionnelle améliore la finalisation du panier — son installation se fait en un clic, et elle est elle-même accessible au clavier.",
   },
   {
     q: "Koraly comprend-elle mon accent ?",
@@ -1628,7 +1628,7 @@ export function FaqAccordion() {
         <span className="vc-eyebrow">Questions fréquentes</span>
         <h2 className="vc-h2 mt-4" style={{ color: "var(--text)" }}>Accessibilité, technique, tarification.</h2>
         <p className="mt-2 text-[17px] max-w-[640px] mb-12" style={{ color: "var(--text-soft)" }}>
-          Les questions qu&apos;on nous pose le plus souvent. Si la vôtre n&apos;y est pas, <a href="mailto:contact@voixcourses.fr" className="underline" style={{ color: "var(--accent)" }}>écrivez-nous</a>.
+          Les questions qu&apos;on nous pose le plus souvent. Si la vôtre n&apos;y est pas, <a href="mailto:contact@coraly.fr" className="underline" style={{ color: "var(--accent)" }}>écrivez-nous</a>.
         </p>
         <div>
           {FAQS.map((f, i) => (
@@ -1735,7 +1735,7 @@ git commit -m "feat(design): FinalCtaSection plein écran"
 import { useEffect, useRef } from "react";
 
 const GREETING = "Bonjour, je suis Koraly.";
-const SESSION_KEY = "voixcourses-welcome-played";
+const SESSION_KEY = "coraly-welcome-played";
 
 interface UseWelcomeAudioOptions {
   /** Si false (voix coupée), ne rien faire. */
@@ -1826,7 +1826,7 @@ import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-prefere
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export default function HomePage() {
-  useDocumentTitle("VoixCourses — Vos courses par la voix");
+  useDocumentTitle("Coraly — Vos courses par la voix");
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const { prefs } = usePreferences();
@@ -1889,7 +1889,7 @@ pnpm dev
 ```
 Ouvrir `http://localhost:3000`. Attendu :
 - Barre accessibilité en haut avec 4 thèmes
-- Header VoixCourses. par Koraly
+- Header Coraly. par Koraly
 - Hero avec orb animée
 - Toutes les sections jusqu'au footer 4 colonnes
 
@@ -1957,7 +1957,7 @@ Chaque occurrence doit être remplacée par `bg-[var(--accent)]` / `text-[var(--
 ```bash
 pnpm dev
 ```
-Ouvrir `/courses`. Attendu : fond crème, header VoixCourses. par Koraly, flow store→input→results inchangé, Footer 4 colonnes en bas.
+Ouvrir `/courses`. Attendu : fond crème, header Coraly. par Koraly, flow store→input→results inchangé, Footer 4 colonnes en bas.
 
 - [ ] **Step 5: Commit**
 
@@ -2039,7 +2039,7 @@ return (
 );
 ```
 
-3. Retirer l'ancien `<Link href="/">← Retour à VoixCourses</Link>` puisque le header gère le retour via le logo.
+3. Retirer l'ancien `<Link href="/">← Retour à Coraly</Link>` puisque le header gère le retour via le logo.
 
 - [ ] **Step 2: Typographie accessible**
 
@@ -2096,7 +2096,7 @@ Sinon, adapter `Logo` pour qu'il reprenne le nouveau style (logo + point brass +
 export function Logo({ subtitle = true }: { subtitle?: boolean }) {
   return (
     <div className="flex items-baseline gap-3.5">
-      <span className="text-2xl font-bold" style={{ letterSpacing: "-0.6px", color: "var(--text)" }}>VoixCourses</span>
+      <span className="text-2xl font-bold" style={{ letterSpacing: "-0.6px", color: "var(--text)" }}>Coraly</span>
       <span style={{ color: "var(--brass)", fontSize: 28, lineHeight: 1, marginLeft: -2 }}>.</span>
       {subtitle && (
         <span
@@ -2113,7 +2113,7 @@ export function Logo({ subtitle = true }: { subtitle?: boolean }) {
 
 ```bash
 git add src/components/logo.tsx 2>/dev/null || git add -u src/components/logo.tsx
-git commit -m "chore(logo): aligner sur nouvelle identité VoixCourses. par Koraly"
+git commit -m "chore(logo): aligner sur nouvelle identité Coraly. par Koraly"
 ```
 
 ---
@@ -2181,7 +2181,7 @@ git commit -m "chore: vérifications finales redesign Marine éditorial" --allow
 ## Self-Review (post-écriture)
 
 **Spec coverage :**
-- ✓ Naming VoixCourses + Koraly → Task 2 (metadata), Task 6 (footer), Task 7 (SiteHeader), Task 17 (welcome audio)
+- ✓ Naming Coraly + Koraly → Task 2 (metadata), Task 6 (footer), Task 7 (SiteHeader), Task 17 (welcome audio)
 - ✓ Tokens Marine complets → Task 3
 - ✓ Luciole → Task 1, 2
 - ✓ 4 profils visuels → Task 3 (CSS), Task 4 (init), Task 5 (UI)
@@ -2205,7 +2205,7 @@ git commit -m "chore: vérifications finales redesign Marine éditorial" --allow
 
 ## Plan complete
 
-Plan sauvegardé dans `docs/superpowers/plans/2026-04-12-voixcourses-redesign.md`.
+Plan sauvegardé dans `docs/superpowers/plans/2026-04-12-coraly-redesign.md`.
 
 Deux options d'exécution :
 
