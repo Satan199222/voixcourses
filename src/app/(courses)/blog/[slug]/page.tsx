@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
-import { AccessibilityBar } from "@/components/accessibility-bar";
+import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { HelpDialog } from "@/components/help-dialog";

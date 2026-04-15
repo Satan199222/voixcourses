@@ -9,9 +9,9 @@ import {
   useConversationMode,
   useConversationClientTool,
 } from "@elevenlabs/react";
-import { AccessibilityBar } from "@/components/accessibility-bar";
+import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
 import { SiteHeader } from "@/components/site-header";
-import { LiveRegion } from "@/components/live-region";
+import { LiveRegion } from "@/lib/shared/components/live-region";
 import { Footer } from "@/components/footer";
 import { InstallExtensionBanner } from "@/components/install-extension-banner";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";

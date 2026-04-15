@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AccessibilityBar } from "@/components/accessibility-bar";
+import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
 import { SiteHeader } from "@/components/site-header";
 import { HeroSection } from "@/components/hero-section";
 import { TrustStrip } from "@/components/trust-strip";
@@ -13,11 +13,11 @@ import { TestimonySection } from "@/components/testimony-section";
 import { FaqAccordion } from "@/components/faq-accordion";
 import { FinalCtaSection } from "@/components/final-cta-section";
 import { Footer } from "@/components/footer";
-import { LiveRegion } from "@/components/live-region";
+import { LiveRegion } from "@/lib/shared/components/live-region";
 import { HelpDialog } from "@/components/help-dialog";
-import { useSpeech } from "@/lib/speech/use-speech";
-import { useWelcomeAudio } from "@/lib/speech/use-welcome-audio";
-import { useKeyboardShortcuts } from "@/lib/speech/use-keyboard-shortcuts";
+import { useSpeech } from "@/lib/shared/speech/use-speech";
+import { useWelcomeAudio } from "@/lib/shared/speech/use-welcome-audio";
+import { useKeyboardShortcuts } from "@/lib/shared/speech/use-keyboard-shortcuts";
 import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-preferences";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 

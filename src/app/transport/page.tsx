@@ -7,12 +7,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { AccessibilityBar } from "@/components/accessibility-bar";
-import { LiveRegion } from "@/components/live-region";
+import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
+import { LiveRegion } from "@/lib/shared/components/live-region";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { HelpDialog } from "@/components/help-dialog";
-import { useSpeech } from "@/lib/speech/use-speech";
+import { useSpeech } from "@/lib/shared/speech/use-speech";
 import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-preferences";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import type {
@@ -374,7 +374,7 @@ function JourneyCard({ journey, index, onRead }: JourneyCardProps) {
                     À pied — {formatDuration(leg.duration)}
                     {leg.to && (
                       <span style={{ color: "var(--text-muted)" }}>
-                        {" "}jusqu'à {leg.to}
+                        {" "}jusqu&apos;à {leg.to}
                       </span>
                     )}
                   </span>
