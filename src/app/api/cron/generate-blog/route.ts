@@ -84,13 +84,10 @@ interface ExistingArticle {
 }
 
 async function generateTopic(existingArticles: ExistingArticle[]): Promise<BlogTopic> {
-  // Compter les articles par catégorie pour équilibrer
-  const counts: Record<string, number> = {
-    accessibilite: 0,
-    technologie: 0,
-    formation: 0,
-    pratique: 0,
-  };
+  // Compter les articles par catégorie pour équilibrer — dérivé de BLOG_THEMES
+  const counts: Record<string, number> = Object.fromEntries(
+    Object.keys(BLOG_THEMES).map((k) => [k, 0])
+  );
   for (const a of existingArticles) {
     if (a.category in counts) counts[a.category]++;
   }
