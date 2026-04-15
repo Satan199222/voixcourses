@@ -18,7 +18,7 @@ const CATEGORY_LABELS: Record<SanityPost["category"], string> = {
 };
 
 /**
- * Page /blog/[slug] — Article de blog VoixCourses.
+ * Page /blog/[slug] — Article de blog Coraly.
  *
  * Le corps de l'article est rendu en texte simple jusqu'à l'installation de
  * @portabletext/react (GROA-122).
@@ -32,7 +32,7 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<SanityPost | null | undefined>(undefined);
 
   useDocumentTitle(
-    post ? `${post.title} — Blog VoixCourses` : "Article — Blog VoixCourses"
+    post ? `${post.title} — Blog Coraly` : "Article — Blog Coraly"
   );
 
   useEffect(() => {

@@ -103,7 +103,7 @@ export default function AssistantVocalPage() {
               className="text-[19px] leading-[1.75] max-w-[660px] mt-4"
               style={{ color: "var(--text-soft)" }}
             >
-              Un assistant vocal change tout. Avec VoixCourses, votre voix
+              Un assistant vocal change tout. Avec Coraly, votre voix
               devient la seule télécommande dont vous avez besoin.
             </p>
           </div>
@@ -214,13 +214,13 @@ export default function AssistantVocalPage() {
                 className="vc-h2 mb-5"
                 style={{ color: "var(--text)" }}
               >
-                {`Comment fonctionne l'assistant vocal VoixCourses\u00a0?`}
+                {`Comment fonctionne l'assistant vocal Coraly\u00a0?`}
               </h2>
               <p
                 className="text-[17px] leading-[1.8] mb-6"
                 style={{ color: "var(--text-soft)" }}
               >
-                {`VoixCourses intègre un assistant vocal natif, disponible dès l'ouverture de l'application. Il reconnaît les commandes en français, même avec des accents régionaux ou une diction lente.`}
+                {`Coraly intègre un assistant vocal natif, disponible dès l'ouverture de l'application. Il reconnaît les commandes en français, même avec des accents régionaux ou une diction lente.`}
               </p>
 
               <h3
@@ -263,13 +263,13 @@ export default function AssistantVocalPage() {
                 className="vc-h2 mb-5"
                 style={{ color: "var(--text)" }}
               >
-                VoixCourses, accessible bien au-delà de la voix
+                Coraly, accessible bien au-delà de la voix
               </h2>
               <p
                 className="text-[17px] leading-[1.8] mb-5"
                 style={{ color: "var(--text-soft)" }}
               >
-                {`L'assistant vocal est l'une des fonctionnalités de VoixCourses, mais pas la seule. L'interface complète a été conçue selon les standards WCAG AA+\u00a0:`}
+                {`L'assistant vocal est l'une des fonctionnalités de Coraly, mais pas la seule. L'interface complète a été conçue selon les standards WCAG AA+\u00a0:`}
               </p>
               <ul className="flex flex-col gap-2" role="list">
                 {A11Y_FEATURES.map((feat) => (
@@ -311,7 +311,7 @@ export default function AssistantVocalPage() {
                 className="text-[17px] leading-[1.7] mb-8 max-w-[480px] mx-auto"
                 style={{ color: "var(--text-soft)" }}
               >
-                VoixCourses est gratuit pour tous les particuliers. Créez votre
+                Coraly est gratuit pour tous les particuliers. Créez votre
                 compte en moins de deux minutes et commencez à apprendre à votre
                 rythme, avec votre voix.
               </p>

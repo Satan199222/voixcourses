@@ -2,16 +2,16 @@
  * Script injecté sur toutes les pages carrefour.fr.
  *
  * Comportement :
- * - Si une liste VoixCourses est en attente : bannière + voix ON d'emblée
+ * - Si une liste Coraly est en attente : bannière + voix ON d'emblée
  * - Sinon : voix OFF par défaut pour ne pas polluer la navigation Carrefour
  *   ordinaire d'un utilisateur qui consulte simplement le site.
  */
 
-const STORAGE_KEY = "voixcourses-pending-list";
+const STORAGE_KEY = "coraly-pending-list";
 /** TTL : au-delà, la liste est considérée périmée (abandonnée) */
 const LIST_TTL_MS = 24 * 60 * 60 * 1000;
-const BANNER_ID = "voixcourses-banner";
-const POST_FILL_KEY = "voixcourses-just-filled";
+const BANNER_ID = "coraly-banner";
+const POST_FILL_KEY = "coraly-just-filled";
 
 const {
   tts,
@@ -19,7 +19,7 @@ const {
   safeStorageGet,
   safeStorageSet,
   safeStorageRemove,
-} = window.__voixcoursesTTS;
+} = window.__coralyTTS;
 
 async function getPendingList() {
   const result = await safeStorageGet([STORAGE_KEY]);
@@ -284,7 +284,7 @@ async function showBanner(list) {
     id: BANNER_ID,
     attrs: {
       role: "region",
-      "aria-label": "VoixCourses — liste en attente",
+      "aria-label": "Coraly — liste en attente",
     },
     style:
       "position:fixed;top:0;left:0;right:0;z-index:2147483647;" +
@@ -302,7 +302,7 @@ async function showBanner(list) {
 
   const topLine = el("div", { style: "margin-bottom:4px" });
   topLine.appendChild(
-    el("strong", { text: "VoixCourses", style: "color:#4cc9f0" })
+    el("strong", { text: "Coraly", style: "color:#4cc9f0" })
   );
   topLine.appendChild(
     document.createTextNode(` — Liste prête : ${list.title}`)
@@ -359,7 +359,7 @@ async function showBanner(list) {
   const itemCount = listItems.length;
 
   const fillBtn = el("button", {
-    id: "voixcourses-fill",
+    id: "coraly-fill",
     text:
       currentCart.itemCount > 0
         ? `Ajouter (${itemCount})`
@@ -367,8 +367,8 @@ async function showBanner(list) {
     attrs: {
       "aria-label":
         currentCart.itemCount > 0
-          ? `Ajouter ${itemCount} produit${itemCount > 1 ? "s" : ""} VoixCourses à votre panier existant de ${currentCart.itemCount} article${currentCart.itemCount > 1 ? "s" : ""}. Raccourci : touche R.`
-          : `Remplir mon panier Carrefour avec ${itemCount} produit${itemCount > 1 ? "s" : ""} de VoixCourses. Raccourci : touche R.`,
+          ? `Ajouter ${itemCount} produit${itemCount > 1 ? "s" : ""} Coraly à votre panier existant de ${currentCart.itemCount} article${currentCart.itemCount > 1 ? "s" : ""}. Raccourci : touche R.`
+          : `Remplir mon panier Carrefour avec ${itemCount} produit${itemCount > 1 ? "s" : ""} de Coraly. Raccourci : touche R.`,
       type: "button",
       "data-action": "add",
       accesskey: "r",
@@ -382,10 +382,10 @@ async function showBanner(list) {
   let replaceBtn = null;
   if (currentCart.itemCount > 0) {
     replaceBtn = el("button", {
-      id: "voixcourses-replace",
+      id: "coraly-replace",
       text: "Remplacer",
       attrs: {
-        "aria-label": `Vider mon panier actuel et le remplacer par la liste VoixCourses.`,
+        "aria-label": `Vider mon panier actuel et le remplacer par la liste Coraly.`,
         type: "button",
         "data-action": "replace",
       },
@@ -396,16 +396,16 @@ async function showBanner(list) {
     right.appendChild(replaceBtn);
   }
 
-  // Lien "Modifier ma liste" — retour vers voixcourses.fr.
+  // Lien "Modifier ma liste" — retour vers coraly.fr.
   // Utile si l'utilisateur réalise qu'il a oublié un produit avant de valider.
   let editBtn = null;
   if (list.returnUrl) {
     editBtn = el("button", {
-      id: "voixcourses-edit",
+      id: "coraly-edit",
       text: "Modifier ma liste",
       attrs: {
         "aria-label":
-          "Retourner sur VoixCourses pour modifier la liste. Raccourci : touche E.",
+          "Retourner sur Coraly pour modifier la liste. Raccourci : touche E.",
         type: "button",
         accesskey: "e",
       },
@@ -417,11 +417,11 @@ async function showBanner(list) {
   }
 
   const dismissBtn = el("button", {
-    id: "voixcourses-dismiss",
+    id: "coraly-dismiss",
     text: "Ignorer",
     attrs: {
       "aria-label":
-        "Ignorer cette liste VoixCourses. Raccourci : touche I.",
+        "Ignorer cette liste Coraly. Raccourci : touche I.",
       type: "button",
       accesskey: "i",
     },
@@ -472,13 +472,13 @@ async function showBanner(list) {
 
   // Ligne 3 : progress bar (cachée par défaut, apparaît pendant fillCart)
   const progressWrap = el("div", {
-    id: "voixcourses-progress-wrap",
+    id: "coraly-progress-wrap",
     style:
       "display:none;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;",
     attrs: { "aria-hidden": "true" },
   });
   const progressBar = el("div", {
-    id: "voixcourses-progress-bar",
+    id: "coraly-progress-bar",
     style:
       "height:100%;width:0%;background:#4cc9f0;transition:width 0.15s ease;",
   });
@@ -487,7 +487,7 @@ async function showBanner(list) {
 
   // Zone aria-live (invisible)
   const status = el("div", {
-    id: "voixcourses-status",
+    id: "coraly-status",
     attrs: { role: "status", "aria-live": "polite" },
     style:
       "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;",
@@ -512,7 +512,7 @@ async function showBanner(list) {
   if (editBtn) actions.push("E pour modifier la liste");
   actions.push("I pour ignorer");
 
-  const recap = `VoixCourses. Liste prête : ${list.title}. ${authText}. ${cartStatus}. Raccourcis : ${actions.join(", ")}.`;
+  const recap = `Coraly. Liste prête : ${list.title}. ${authText}. ${cartStatus}. Raccourcis : ${actions.join(", ")}.`;
   tts.speak(recap);
 
   function addFocusSpeaker(btn) {
@@ -683,7 +683,7 @@ async function showBanner(list) {
  * role="dialog" aria-modal, annoncé par TTS à l'ouverture.
  */
 function showReplaceConfirmDialog({ currentCount, newCount, onConfirm }) {
-  const DIALOG_ID = "voixcourses-confirm-dialog";
+  const DIALOG_ID = "coraly-confirm-dialog";
   if (document.getElementById(DIALOG_ID)) return;
 
   const backdrop = el("div", {
@@ -691,8 +691,8 @@ function showReplaceConfirmDialog({ currentCount, newCount, onConfirm }) {
     attrs: {
       role: "dialog",
       "aria-modal": "true",
-      "aria-labelledby": "voixcourses-confirm-title",
-      "aria-describedby": "voixcourses-confirm-msg",
+      "aria-labelledby": "coraly-confirm-title",
+      "aria-describedby": "coraly-confirm-msg",
     },
     style:
       "position:fixed;inset:0;z-index:2147483647;" +
@@ -708,14 +708,14 @@ function showReplaceConfirmDialog({ currentCount, newCount, onConfirm }) {
   });
 
   const title = el("h2", {
-    id: "voixcourses-confirm-title",
+    id: "coraly-confirm-title",
     text: "Remplacer le panier ?",
     style: "margin:0 0 12px 0;font-size:20px;color:#f0f0f5;",
   });
 
   const msg = el("p", {
-    id: "voixcourses-confirm-msg",
-    text: `Votre panier actuel (${currentCount} article${currentCount > 1 ? "s" : ""}) sera vidé et remplacé par la liste VoixCourses (${newCount} produit${newCount > 1 ? "s" : ""}). Cette action est irréversible.`,
+    id: "coraly-confirm-msg",
+    text: `Votre panier actuel (${currentCount} article${currentCount > 1 ? "s" : ""}) sera vidé et remplacé par la liste Coraly (${newCount} produit${newCount > 1 ? "s" : ""}). Cette action est irréversible.`,
     style: "margin:0 0 20px 0;color:#a0a8b8;line-height:1.5;",
   });
 
@@ -736,7 +736,7 @@ function showReplaceConfirmDialog({ currentCount, newCount, onConfirm }) {
     attrs: {
       type: "button",
       "aria-label":
-        "Confirmer : vider le panier actuel et le remplacer par la liste VoixCourses",
+        "Confirmer : vider le panier actuel et le remplacer par la liste Coraly",
     },
     style:
       "padding:10px 20px;background:#ff6b8a;color:#0f0f1a;" +
@@ -850,16 +850,16 @@ async function announceCartPage() {
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────
-// 1. Vérifier si liste VoixCourses en attente AVANT d'initialiser la voix
+// 1. Vérifier si liste Coraly en attente AVANT d'initialiser la voix
 // 2. Si liste : voix ON + bannière + greeting bypass
 // 3. Sinon : voix OFF par défaut (respect de l'utilisateur qui consulte Carrefour
-//    pour ses propres raisons, pas via VoixCourses)
+//    pour ses propres raisons, pas via Coraly)
 (async () => {
   // Si le contexte d'extension est mort (rechargé en dev pendant qu'un onglet
   // était ouvert), on ne tente rien — les API chrome.* throw sinon.
   if (!isExtensionAlive()) return;
 
-  const api = window.__voixcoursesTTS;
+  const api = window.__coralyTTS;
   const list = await getPendingList();
   const hasPendingList = !!list;
 
@@ -872,9 +872,9 @@ async function announceCartPage() {
     });
     showBanner(list);
   } else {
-    const prefResult = await safeStorageGet(["voixcourses-voice-enabled"]);
-    const pref = prefResult["voixcourses-voice-enabled"];
-    api.tts.enabled = pref === true; // OFF par défaut hors flux VoixCourses
+    const prefResult = await safeStorageGet(["coraly-voice-enabled"]);
+    const pref = prefResult["coraly-voice-enabled"];
+    api.tts.enabled = pref === true; // OFF par défaut hors flux Coraly
     if (api.tts.enabled) {
       api.installFocusSpeaker();
       api.installVoiceToggleShortcut();

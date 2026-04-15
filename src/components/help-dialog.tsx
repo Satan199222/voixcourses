@@ -83,7 +83,7 @@ export function HelpDialog({ open, onClose }: HelpDialogProps) {
           id="help-dialog-desc"
           className="text-[var(--text-muted)] mb-4 text-sm"
         >
-          VoixCourses est conçu pour fonctionner entièrement au clavier et avec
+          Coraly est conçu pour fonctionner entièrement au clavier et avec
           un lecteur d&apos;écran.
         </p>
 

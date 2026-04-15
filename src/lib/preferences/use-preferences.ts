@@ -2,10 +2,10 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 
-const KEY = "voixcourses-preferences";
+const KEY = "coraly-preferences";
 /** Événement custom : permet à plusieurs instances du hook de rester en phase
  *  au sein du MÊME onglet (l'event `storage` natif ne couvre que le cross-tab). */
-const CHANGE_EVENT = "voixcourses-prefs-changed";
+const CHANGE_EVENT = "coraly-prefs-changed";
 
 export type SpeechRate = "slow" | "normal" | "fast";
 export type SpeechLocale = "fr-FR" | "fr-BE" | "fr-CH" | "fr-CA";

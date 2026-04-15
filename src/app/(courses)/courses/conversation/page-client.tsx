@@ -62,7 +62,7 @@ interface ToolEvent {
 }
 
 export default function ConversationPageClient() {
-  useDocumentTitle("VoixCourses — Mode conversation");
+  useDocumentTitle("Coraly — Mode conversation");
   const [announce, setAnnounce] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -343,7 +343,7 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
     if (items.length === 0) return JSON.stringify({ error: "Panier vide." });
     if (!extension.installed || !extension.extensionId) {
       return JSON.stringify({
-        error: "Extension VoixCourses non installée.",
+        error: "Extension Coraly non installée.",
         action: "install_extension_needed",
       });
     }
@@ -368,7 +368,7 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
         title: i.title,
         price: i.price,
       })),
-      title: `${items.length} produits · VoixCourses conversation`,
+      title: `${items.length} produits · Coraly conversation`,
       returnUrl:
         typeof window !== "undefined" ? window.location.origin : undefined,
     });
@@ -484,9 +484,9 @@ function ConversationExperience({ setAnnounce, error, setError }: UIProps) {
       <Link
         href="/"
         className="inline-block text-sm text-[var(--accent)] underline"
-        aria-label="Retour à l'accueil VoixCourses"
+        aria-label="Retour à l'accueil Coraly"
       >
-        ← Accueil VoixCourses
+        ← Accueil Coraly
       </Link>
 
       <header className="space-y-2">

@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 
 export const metadata: Metadata = {
-  title: "Assistant vocal pour cours en ligne — Apprendre sans les mains | VoixCourses",
+  title: "Assistant vocal pour cours en ligne — Apprendre sans les mains | Coraly",
   description:
-    "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. Découvrez comment VoixCourses rend la formation accessible à tous.",
+    "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. Découvrez comment Coraly rend la formation accessible à tous.",
   alternates: {
     canonical: "/guide/assistant-vocal-cours-en-ligne",
   },
   openGraph: {
     type: "website",
-    title: "Assistant vocal pour cours en ligne — Apprendre sans les mains | VoixCourses",
+    title: "Assistant vocal pour cours en ligne — Apprendre sans les mains | Coraly",
     description:
-      "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. VoixCourses rend la formation accessible à tous.",
+      "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. Coraly rend la formation accessible à tous.",
     url: "/guide/assistant-vocal-cours-en-ligne",
     images: [
       {
         url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "Assistant vocal cours en ligne — VoixCourses",
+        alt: "Assistant vocal cours en ligne — Coraly",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Assistant vocal pour cours en ligne | VoixCourses",
+    title: "Assistant vocal pour cours en ligne | Coraly",
     description:
       "Commandez vos cours par la voix, apprenez à votre rythme. Formation accessible à tous.",
     images: ["/images/og-default.jpg"],
@@ -38,7 +38,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "L'assistant vocal qui transforme votre façon d'apprendre en ligne",
   description:
-    "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. Découvrez comment VoixCourses rend la formation accessible à tous.",
+    "Un assistant vocal pour vos cours en ligne : commandez par la voix, apprenez à votre rythme. Découvrez comment Coraly rend la formation accessible à tous.",
   url: `${SITE_URL}/guide/assistant-vocal-cours-en-ligne`,
   inLanguage: "fr",
   breadcrumb: {

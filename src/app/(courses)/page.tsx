@@ -22,7 +22,7 @@ import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-prefere
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export default function HomePage() {
-  useDocumentTitle("VoixCourses — Vos courses par la voix");
+  useDocumentTitle("Coraly — Vos courses par la voix");
 
   const router = useRouter();
   // Démarre toujours à true côté serveur pour cohérence SSR/client.

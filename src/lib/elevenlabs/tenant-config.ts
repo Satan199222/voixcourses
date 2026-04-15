@@ -25,7 +25,7 @@ export interface TenantElevenLabsConfig {
 /**
  * Parse ELEVENLABS_HOSTNAME_MAP depuis process.env à chaque appel.
  * Format : JSON object { "hostname": "tenantId" }
- * Ex : { "voixcourses.com": "default", "client-abc.voixcourses.com": "clientabc" }
+ * Ex : { "coraly.com": "default", "client-abc.coraly.com": "clientabc" }
  *
  * Intentionnellement non-cachée : la valeur doit être relue à chaque requête
  * pour que les tests puissent modifier process.env sans redémarrer le module.

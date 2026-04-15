@@ -1,4 +1,4 @@
-# VoixCourses — Design Spec
+# Coraly — Design Spec
 
 **Date :** 2026-04-12
 **Auteur :** Julien + Claude (brainstorming session)
@@ -6,7 +6,7 @@
 
 ## 1. Contexte et objectif
 
-VoixCourses est une application d'assistance vocale pour faire ses courses en ligne, destinée aux personnes déficientes visuelles (non-voyantes, malvoyantes, seniors avec DMLA/glaucome/cataracte) ainsi qu'à tous les utilisateurs préférant la voix. Elle s'intègre aux principales enseignes françaises (Carrefour, Auchan, Monoprix, Franprix, Intermarché).
+Coraly est une application d'assistance vocale pour faire ses courses en ligne, destinée aux personnes déficientes visuelles (non-voyantes, malvoyantes, seniors avec DMLA/glaucome/cataracte) ainsi qu'à tous les utilisateurs préférant la voix. Elle s'intègre aux principales enseignes françaises (Carrefour, Auchan, Monoprix, Franprix, Intermarché).
 
 Cette spec fige la **direction visuelle et structurelle** de la landing page et du produit. Le fonctionnel vocal (Koraly, 3 modes, scraping enseignes) existe déjà ; cette spec guide l'habillage éditorial et le refactor UI qui va suivre.
 
@@ -14,7 +14,7 @@ Cette spec fige la **direction visuelle et structurelle** de la landing page et 
 
 | Rôle | Nom | Usage |
 |---|---|---|
-| Produit | **VoixCourses** | URL (`voixcourses.fr`), SEO, pitch B2B, App Store, documentation |
+| Produit | **Coraly** | URL (`coraly.fr`), SEO, pitch B2B, App Store, documentation |
 | Assistante vocale | **Koraly** | Personnalité, voix (Jade ElevenLabs), orb, "Bonjour je suis Koraly" |
 
 Modèle Amazon/Alexa : produit et personnage sont distincts. Le naming descriptif protège le SEO (« voix + courses ») jusqu'à ce que la traction permette un éventuel rebrand plateforme.
@@ -91,7 +91,7 @@ Chaque profil garantit contraste AAA sur tous les éléments.
 Ordre validé des sections :
 
 1. **AccessibilityBar (sticky top)** — Label "Confort de lecture", Aa−/Aa+, 4 profils, toggle voix, états `aria-pressed`
-2. **Header site** — Logo `VoixCourses.` + sous-titre `par Koraly`, nav principale, bouton Se connecter
+2. **Header site** — Logo `Coraly.` + sous-titre `par Koraly`, nav principale, bouton Se connecter
 3. **Hero** — eyebrow "Accessibilité première · Conforme AAA", h1 "Vos courses, par la voix.", lede, CTA primaire + démo audio, raccourcis clavier visibles, Koraly orb animée (pulse + 2 ripples) avec transcript live et bouton "Écouter la voix"
 4. **Trust strip** — Enseignes partenaires (Carrefour, Auchan, Monoprix, Franprix, Intermarché, + bientôt)
 5. **Section 3 modes** — "Choisissez votre manière de faire les courses", 3 cartes avec touche clavier affichée (1/2/3), carte centrale featured (sombre), features listées en puces, mention "idéal pour"

@@ -11,7 +11,7 @@ const PERKS = [
   {
     icon: "🎧",
     title: "Accès prioritaire",
-    body: "Vous êtes parmi les premières personnes à tester VoixCourses avant son lancement public. Votre retour façonnera le produit.",
+    body: "Vous êtes parmi les premières personnes à tester Coraly avant son lancement public. Votre retour façonnera le produit.",
   },
   {
     icon: "♿",
@@ -31,11 +31,11 @@ const PERKS = [
 ];
 
 /**
- * Page /beta — Landing programme bêta VoixCourses.
+ * Page /beta — Landing programme bêta Coraly.
  * Présente le programme et remercie les testeurs.
  */
 export default function BetaPage() {
-  useDocumentTitle("Programme Bêta — VoixCourses");
+  useDocumentTitle("Programme Bêta — Coraly");
 
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -55,7 +55,7 @@ export default function BetaPage() {
             >
               Bienvenue dans la bêta
               <br />
-              VoixCourses.
+              Coraly.
             </h1>
             <p
               className="text-[20px] leading-[1.6] max-w-[640px] mx-auto"
@@ -128,7 +128,7 @@ export default function BetaPage() {
               className="vc-h2 mb-4"
               style={{ color: "var(--text-on-ink)" }}
             >
-              Merci de tester VoixCourses !
+              Merci de tester Coraly !
             </h2>
             <p
               className="text-[18px] leading-[1.6] max-w-[480px] mx-auto mb-8"
@@ -144,11 +144,11 @@ export default function BetaPage() {
             >
               Une question ou un retour ?{" "}
               <a
-                href="mailto:beta@voixcourses.fr"
+                href="mailto:hello@coraly.fr"
                 className="font-semibold underline underline-offset-2"
                 style={{ color: "var(--brass)" }}
               >
-                beta@voixcourses.fr
+                hello@coraly.fr
               </a>
             </p>
           </div>

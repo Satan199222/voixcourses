@@ -14,17 +14,17 @@
 export const THEME_INIT_SCRIPT = `
 (function() {
   try {
-    var t = localStorage.getItem('voixcourses-theme');
+    var t = localStorage.getItem('coraly-theme');
     var migration = { 'dark': 'sombre', 'high-contrast': 'jaune-noir', 'light': 'clair' };
-    if (migration[t]) { t = migration[t]; localStorage.setItem('voixcourses-theme', t); }
+    if (migration[t]) { t = migration[t]; localStorage.setItem('coraly-theme', t); }
     if (t === 'sombre' || t === 'jaune-noir' || t === 'blanc-bleu') {
       document.documentElement.classList.add('theme-' + t);
     }
-    var s = localStorage.getItem('voixcourses-font-size') || '18px';
-    if (s === '1.3rem' || s === '1.125rem') { s = '18px'; localStorage.setItem('voixcourses-font-size', s); }
+    var s = localStorage.getItem('coraly-font-size') || '18px';
+    if (s === '1.3rem' || s === '1.125rem') { s = '18px'; localStorage.setItem('coraly-font-size', s); }
     document.documentElement.style.setProperty('--font-size-base', s);
-    if (!localStorage.getItem('voixcourses-font-size')) {
-      localStorage.setItem('voixcourses-font-size', '18px');
+    if (!localStorage.getItem('coraly-font-size')) {
+      localStorage.setItem('coraly-font-size', '18px');
     }
   } catch (e) {}
 })();

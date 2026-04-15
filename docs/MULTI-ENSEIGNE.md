@@ -1,6 +1,6 @@
 # Comparatif Multi-Enseigne — Probes API
 
-> VoixCourses — Testé le 2026-04-11
+> Coraly — Testé le 2026-04-11
 
 ## Résumé
 

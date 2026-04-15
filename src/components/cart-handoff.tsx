@@ -123,7 +123,7 @@ export function CartHandoff({
       {extension.installed && (
         <div className="p-6 rounded-lg bg-[var(--bg-surface)] border-2 border-[var(--success)]">
           <h3 className="text-lg font-bold mb-3 text-[var(--success)]">
-            ✓ Extension VoixCourses détectée
+            ✓ Extension Coraly détectée
           </h3>
           <p className="mb-4">
             Envoyez votre liste en un clic — l&apos;extension ouvre Carrefour et
@@ -137,7 +137,7 @@ export function CartHandoff({
             aria-label={
               sent
                 ? "Liste déjà envoyée à l'extension"
-                : `Envoyer ${cart.items.length} produit${cart.items.length > 1 ? "s" : ""} à l'extension VoixCourses pour remplir le panier Carrefour`
+                : `Envoyer ${cart.items.length} produit${cart.items.length > 1 ? "s" : ""} à l'extension Coraly pour remplir le panier Carrefour`
             }
             className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-colors ${
               sent
@@ -168,18 +168,18 @@ export function CartHandoff({
       {!extension.installed && (
         <div className="p-6 rounded-lg bg-[var(--bg-surface)] border-2 border-[var(--accent)]">
           <h3 className="text-lg font-bold mb-3">
-            Installez l&apos;extension VoixCourses
+            Installez l&apos;extension Coraly
           </h3>
           <p className="text-[var(--text-muted)] mb-4">
             Pour remplir votre panier Carrefour automatiquement,
-            l&apos;extension VoixCourses est nécessaire. Elle agit dans votre
+            l&apos;extension Coraly est nécessaire. Elle agit dans votre
             propre session — vos identifiants ne transitent jamais par
-            VoixCourses. Installation en 30 secondes.
+            Coraly. Installation en 30 secondes.
           </p>
           <a
             href="/installer"
             className="inline-block px-6 py-4 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold text-lg hover:bg-[var(--accent-hover)] transition-colors"
-            aria-label="Voir la procédure d'installation de l'extension VoixCourses"
+            aria-label="Voir la procédure d'installation de l'extension Coraly"
           >
             Installer l&apos;extension →
           </a>

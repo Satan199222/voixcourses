@@ -14,14 +14,14 @@ import { getElevenLabsConfig } from "@/lib/elevenlabs/tenant-config";
  *
  * Coût : ~0,18 $/1k chars au-delà du free tier 10k chars/mois. On cap la
  * longueur à 1500 chars par appel pour éviter l'abus ; les annonces
- * VoixCourses font typiquement < 500 chars.
+ * Coraly font typiquement < 500 chars.
  *
  * Modèle : eleven_turbo_v2_5 — rapide (~500ms premier byte), multilingual
  * (gère bien le FR malgré une voix anglophone de base).
  */
 
 const MAX_TEXT_LENGTH = 1500;
-// Rate limit large pour le TTS : une session VoixCourses déclenche beaucoup
+// Rate limit large pour le TTS : une session Coraly déclenche beaucoup
 // d'annonces courtes (étapes, confirmations, focus). 60/min/IP laisse large
 // tout en bloquant un script naïf.
 const RATE_MAX = 60;

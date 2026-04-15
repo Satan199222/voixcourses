@@ -1,5 +1,5 @@
 /**
- * Client Sanity — VoixCourses blog auto-généré.
+ * Client Sanity — Coraly blog auto-généré.
  *
  * TODO GROA-122 : remplacer les stubs par le vrai client Sanity une fois que
  * SANITY_PROJECT_ID et SANITY_API_TOKEN sont disponibles dans Doppler/Vercel env.
@@ -27,7 +27,7 @@ export interface SanityPost {
   category: "accessibilite" | "formation" | "technologie" | "pratique";
   /** Temps de lecture estimé en minutes */
   readingTimeMinutes: number;
-  organizationId: "voixcourses";
+  organizationId: "coraly";
 }
 
 // ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@ export interface SanityPost {
 export async function getAllPosts(): Promise<SanityPost[]> {
   // TODO GROA-122 :
   // const client = createClient({ projectId: process.env.SANITY_PROJECT_ID, dataset: 'production', apiVersion: '2024-01-01', useCdn: true });
-  // return client.fetch(`*[_type == "post" && organizationId == "voixcourses"] | order(publishedAt desc) { _id, title, slug, publishedAt, excerpt, topicId, topicSlug, category, readingTimeMinutes }`);
+  // return client.fetch(`*[_type == "post" && organizationId == "coraly"] | order(publishedAt desc) { _id, title, slug, publishedAt, excerpt, topicId, topicSlug, category, readingTimeMinutes }`);
   return [];
 }
 
@@ -53,7 +53,7 @@ export async function getAllPosts(): Promise<SanityPost[]> {
 export async function getPostBySlug(slug: string): Promise<SanityPost | null> {
   // TODO GROA-122 :
   // const client = createClient({ ... });
-  // return client.fetch(`*[_type == "post" && slug.current == $slug && organizationId == "voixcourses"][0]{ ..., body }`, { slug });
+  // return client.fetch(`*[_type == "post" && slug.current == $slug && organizationId == "coraly"][0]{ ..., body }`, { slug });
   void slug;
   return null;
 }

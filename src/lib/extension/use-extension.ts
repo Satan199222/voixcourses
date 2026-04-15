@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * Représente la présence et les infos de l'extension VoixCourses.
+ * Représente la présence et les infos de l'extension Coraly.
  */
 interface ExtensionState {
   installed: boolean;
@@ -12,7 +12,7 @@ interface ExtensionState {
 }
 
 /**
- * Hook de détection de l'extension navigateur VoixCourses.
+ * Hook de détection de l'extension navigateur Coraly.
  *
  * L'extension injecte un marqueur sur <html> + dispatche un CustomEvent.
  * On détecte les deux : le marqueur (pour le render initial) et l'event
@@ -27,8 +27,8 @@ export function useExtension(): ExtensionState {
 
   useEffect(() => {
     // 1. Check initial marker (extension loaded before React)
-    const marker = document.documentElement.dataset.voixcoursesExtension;
-    const markerId = document.documentElement.dataset.voixcoursesExtensionId;
+    const marker = document.documentElement.dataset.coralyExtension;
+    const markerId = document.documentElement.dataset.coralyExtensionId;
     if (marker) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture initiale d'état externe (DOM dataset posé avant React)
       setState({
@@ -49,9 +49,9 @@ export function useExtension(): ExtensionState {
       });
     }
 
-    window.addEventListener("voixcourses-extension-ready", onReady);
+    window.addEventListener("coraly-extension-ready", onReady);
     return () => {
-      window.removeEventListener("voixcourses-extension-ready", onReady);
+      window.removeEventListener("coraly-extension-ready", onReady);
     };
   }, []);
 

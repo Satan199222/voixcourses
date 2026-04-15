@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    title: "Faire mes courses — VoixCourses",
+    title: "Faire mes courses — Coraly",
     description:
       "Dictez vos courses à Koraly. Accessible au clavier, à la voix et en mode conversation IA.",
     url: "/courses",
@@ -18,13 +18,13 @@ export const metadata: Metadata = {
         url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "VoixCourses — Interface de courses vocale",
+        alt: "Coraly — Interface de courses vocale",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Faire mes courses — VoixCourses",
+    title: "Faire mes courses — Coraly",
     description:
       "Dictez vos courses à Koraly. Accessible au clavier, à la voix et en mode conversation IA.",
     images: ["/images/og-default.jpg"],

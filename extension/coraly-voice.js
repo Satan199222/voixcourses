@@ -1,5 +1,5 @@
 /**
- * Active la voix VoixCourses sur voixcourses.fr et localhost (dev).
+ * Active la voix Coraly sur coraly.fr et localhost (dev).
  *
  * Mêmes comportements que sur carrefour.fr :
  * - Message de bienvenue "Appuyez Entrée pour désactiver, Tab pour continuer"
@@ -11,14 +11,14 @@
  * rechargée, on sort avant de tenter greetIfNeeded (qui read/write storage).
  */
 (async function () {
-  const api = window.__voixcoursesTTS;
+  const api = window.__coralyTTS;
   if (!api) return;
   if (api.isExtensionAlive && !api.isExtensionAlive()) return;
 
   try {
     api.installFocusSpeaker();
     api.installVoiceToggleShortcut();
-    await api.greetIfNeeded("VoixCourses");
+    await api.greetIfNeeded("Coraly");
   } catch {
     /* context invalidated pendant l'exécution — silencieux */
   }

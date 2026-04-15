@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 const GREETING = "Bonjour, je suis Koraly.";
-const SESSION_KEY = "voixcourses-welcome-played";
+const SESSION_KEY = "coraly-welcome-played";
 
 interface UseWelcomeAudioOptions {
   /** Si false (voix coupée), ne rien faire. */

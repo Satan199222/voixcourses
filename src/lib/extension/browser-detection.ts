@@ -23,9 +23,9 @@ export interface BrowserInfo {
 }
 
 /** URLs futures du store — à mettre à jour quand l'extension sera publiée. */
-const CHROME_STORE_URL = "https://chrome.google.com/webstore/search/voixcourses";
-const FIREFOX_STORE_URL = "https://addons.mozilla.org/firefox/search/?q=voixcourses";
-const EDGE_STORE_URL = "https://microsoftedge.microsoft.com/addons/search?search=voixcourses";
+const CHROME_STORE_URL = "https://chrome.google.com/webstore/search/coraly";
+const FIREFOX_STORE_URL = "https://addons.mozilla.org/firefox/search/?q=coraly";
+const EDGE_STORE_URL = "https://microsoftedge.microsoft.com/addons/search?search=coraly";
 
 /**
  * Détecte le navigateur côté client. Uniquement appelable dans un contexte
@@ -55,7 +55,7 @@ export function detectBrowser(): BrowserInfo {
       storeUrl: null,
       storeLabel: null,
       unsupportedReason:
-        "Les extensions navigateur ne sont pas disponibles sur mobile. Utilisez la liste manuelle ou ouvrez VoixCourses sur un ordinateur.",
+        "Les extensions navigateur ne sont pas disponibles sur mobile. Utilisez la liste manuelle ou ouvrez Coraly sur un ordinateur.",
     };
   }
 
@@ -109,7 +109,7 @@ export function detectBrowser(): BrowserInfo {
       storeUrl: null,
       storeLabel: null,
       unsupportedReason:
-        "Safari n'est pas encore supporté. Essayez VoixCourses avec Chrome, Edge, Brave ou Firefox pour profiter de l'extension.",
+        "Safari n'est pas encore supporté. Essayez Coraly avec Chrome, Edge, Brave ou Firefox pour profiter de l'extension.",
     };
   }
 

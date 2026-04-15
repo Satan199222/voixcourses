@@ -6,15 +6,15 @@ import "./globals.css";
 import { THEME_INIT_SCRIPT } from "./theme-init";
 import { luciole } from "@/lib/fonts";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "VoixCourses — Vos courses par la voix",
-    template: "%s — VoixCourses",
+    default: "Coraly — Vos courses par la voix",
+    template: "%s — Coraly",
   },
   description:
     "Faites vos courses en ligne par la voix. Dictez, Koraly compose votre panier. Accessible aux non-voyants, malvoyants et seniors.",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "application courses malvoyants",
     "shopping vocal senior",
     "accessibilité numérique courses",
-    "VoixCourses",
+    "Coraly",
     "Koraly",
     "RGAA AAA",
   ],
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: SITE_URL,
-    siteName: "VoixCourses",
-    title: "VoixCourses — Vos courses par la voix",
+    siteName: "Coraly",
+    title: "Coraly — Vos courses par la voix",
     description:
       "Faites vos courses en ligne par la voix. Dictez, Koraly compose votre panier. Accessible aux non-voyants, malvoyants et seniors.",
     images: [
@@ -58,15 +58,15 @@ export const metadata: Metadata = {
         url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "VoixCourses — Application de courses vocale accessible",
+        alt: "Coraly — Application de courses vocale accessible",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@voixcourses",
-    creator: "@voixcourses",
-    title: "VoixCourses — Vos courses par la voix",
+    site: "@coraly",
+    creator: "@coraly",
+    title: "Coraly — Vos courses par la voix",
     description:
       "Faites vos courses en ligne par la voix. Dictez, Koraly compose votre panier. Accessible aux non-voyants, malvoyants et seniors.",
     images: ["/images/og-default.jpg"],
@@ -78,7 +78,7 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "VoixCourses",
+      name: "Coraly",
       url: SITE_URL,
       description:
         "Application de courses en ligne accessibles par commande vocale. Conçue pour les personnes non-voyantes, malvoyantes et seniors.",
@@ -123,7 +123,7 @@ const jsonLd = {
       name: "GROUPE J",
       url: SITE_URL,
       description:
-        "Éditeur de VoixCourses, application de courses vocale accessible.",
+        "Éditeur de Coraly, application de courses vocale accessible.",
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",
@@ -134,7 +134,7 @@ const jsonLd = {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: SITE_URL,
-      name: "VoixCourses",
+      name: "Coraly",
       description: "Application de courses accessibles par la voix",
       publisher: { "@id": `${SITE_URL}/#organization` },
       inLanguage: "fr",

@@ -230,12 +230,12 @@ describe("getReferralReward", () => {
 describe("buildReferralLink", () => {
   it("construit le lien avec la base par défaut", () => {
     const link = buildReferralLink("ABCD1234");
-    expect(link).toBe("https://voixcourses.fr/invitation/ABCD1234");
+    expect(link).toBe("https://coraly.fr/invitation/ABCD1234");
   });
 
   it("supporte une base URL personnalisée", () => {
-    const link = buildReferralLink("ABCD1234", "https://staging.voixcourses.fr");
-    expect(link).toBe("https://staging.voixcourses.fr/invitation/ABCD1234");
+    const link = buildReferralLink("ABCD1234", "https://staging.coraly.fr");
+    expect(link).toBe("https://staging.coraly.fr/invitation/ABCD1234");
   });
 
   it("encode les caractères spéciaux dans le code", () => {

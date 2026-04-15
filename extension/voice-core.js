@@ -1,12 +1,12 @@
 /**
- * Module vocal partagé par les content scripts sur voixcourses.fr ET
+ * Module vocal partagé par les content scripts sur coraly.fr ET
  * carrefour.fr. Chargé en premier dans l'ordre du manifest, expose
- * `window.__voixcoursesTTS`.
+ * `window.__coralyTTS`.
  */
 
 (function () {
-  const VOICE_PREF_KEY = "voixcourses-voice-enabled";
-  const VOICE_GREETED_KEY = "voixcourses-voice-greeted-at";
+  const VOICE_PREF_KEY = "coraly-voice-enabled";
+  const VOICE_GREETED_KEY = "coraly-voice-greeted-at";
   const GREETING_WINDOW_MS = 30 * 60 * 1000;
 
   /**
@@ -245,11 +245,11 @@
    * pour ne pas saoûler l'utilisateur qui navigue.
    *
    * `forceVoiceOn` : si true, on active la voix même si l'utilisateur l'avait
-   * désactivée (utile quand on arrive sur Carrefour avec une liste VoixCourses
+   * désactivée (utile quand on arrive sur Carrefour avec une liste Coraly
    * en attente — l'utilisateur a explicitement demandé l'action, donc on parle).
    *
    * `bypassWindow` : si true, on ignore la fenêtre anti-spam de 30 min
-   * (idem : listes VoixCourses méritent d'être annoncées à chaque fois).
+   * (idem : listes Coraly méritent d'être annoncées à chaque fois).
    */
   async function greetIfNeeded(siteLabel, opts = {}) {
     const { forceVoiceOn = false, bypassWindow = false } = opts;
@@ -267,7 +267,7 @@
     }
     safeStorageSet({ [VOICE_GREETED_KEY]: now });
 
-    const greeting = `VoixCourses activé sur ${siteLabel}. Appuyez sur Entrée pour désactiver la voix, ou sur Tabulation pour continuer.`;
+    const greeting = `Coraly activé sur ${siteLabel}. Appuyez sur Entrée pour désactiver la voix, ou sur Tabulation pour continuer.`;
     tts.speak(greeting, { force: true });
 
     const keyHandler = (e) => {
@@ -324,7 +324,7 @@
     );
   }
 
-  window.__voixcoursesTTS = {
+  window.__coralyTTS = {
     tts,
     getAccessibleText,
     installFocusSpeaker,

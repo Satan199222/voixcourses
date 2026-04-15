@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const SEEN_KEY = "voixcourses-onboarding-seen";
+const SEEN_KEY = "coraly-onboarding-seen";
 
 /**
  * Carte "Comment ça marche" affichée uniquement à la 1ʳᵉ visite.
@@ -27,10 +27,10 @@ export function Onboarding() {
   return (
     <aside
       role="region"
-      aria-label="Découvrir VoixCourses"
+      aria-label="Découvrir Coraly"
       className="p-5 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] space-y-3"
     >
-      <h2 className="text-xl font-bold">Bienvenue sur VoixCourses 👋</h2>
+      <h2 className="text-xl font-bold">Bienvenue sur Coraly 👋</h2>
       <p className="text-sm text-[var(--text-muted)]">
         Faites vos courses par la voix en 3 étapes :
       </p>

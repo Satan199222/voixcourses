@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 
 export const metadata: Metadata = {
-  title: "Application accessibilité seniors — Apprendre en ligne sans barrière | VoixCourses",
+  title: "Application accessibilité seniors — Apprendre en ligne sans barrière | Coraly",
   description:
-    "VoixCourses est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée. Gratuit pour les particuliers.",
+    "Coraly est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée. Gratuit pour les particuliers.",
   alternates: {
     canonical: "/guide/application-accessibilite-seniors",
   },
   openGraph: {
     type: "website",
-    title: "Application accessibilité seniors — Apprendre en ligne sans barrière | VoixCourses",
+    title: "Application accessibilité seniors — Apprendre en ligne sans barrière | Coraly",
     description:
-      "VoixCourses est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée.",
+      "Coraly est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée.",
     url: "/guide/application-accessibilite-seniors",
     images: [
       {
         url: "/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "Application accessibilité seniors — VoixCourses",
+        alt: "Application accessibilité seniors — Coraly",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Application accessibilité seniors | VoixCourses",
+    title: "Application accessibilité seniors | Coraly",
     description:
       "Formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée. Gratuit.",
     images: ["/images/og-default.jpg"],
@@ -38,7 +38,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "L'application qui met la formation en ligne à portée de tous les seniors",
   description:
-    "VoixCourses est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée. Gratuit pour les particuliers.",
+    "Coraly est l'application de formation en ligne pensée pour les seniors. Navigation vocale, grande police, interface épurée. Gratuit pour les particuliers.",
   url: `${SITE_URL}/guide/application-accessibilite-seniors`,
   inLanguage: "fr",
   breadcrumb: {

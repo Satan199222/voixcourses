@@ -1,4 +1,4 @@
-# VoixCourses — Patterns d'accessibilité
+# Coraly — Patterns d'accessibilité
 
 > Basé sur WAI-ARIA APG, WebAIM Screen Reader Survey #10, W3C Low Vision Needs, GOV.UK Design System
 

@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 
 /**
- * robots.txt VoixCourses.
+ * robots.txt Coraly.
  * - Autorise tous les crawlers sur les pages publiques.
  * - Bloque les routes API et internes.
  */

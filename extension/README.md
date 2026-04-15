@@ -1,19 +1,19 @@
-# Extension VoixCourses
+# Extension Coraly
 
-Extension navigateur qui transfère les listes de courses depuis voixcourses.fr
+Extension navigateur qui transfère les listes de courses depuis coraly.fr
 vers le panier Carrefour dans la session de l'utilisateur.
 
 ## Pourquoi cette extension
 
 La session Carrefour est liée aux cookies du navigateur. Pour remplir le panier
-de l'utilisateur (pas celui du serveur VoixCourses), il faut exécuter du code
+de l'utilisateur (pas celui du serveur Coraly), il faut exécuter du code
 avec ses cookies Carrefour. L'extension fait exactement ça, sans demander de
 connexion ni d'identifiants.
 
 ## Architecture
 
 ```
-voixcourses.fr          extension               carrefour.fr
+coraly.fr          extension               carrefour.fr
      |                      |                        |
      |--SET_LIST msg------->|                        |
      |                      |--chrome.storage.set--->|
@@ -30,9 +30,9 @@ voixcourses.fr          extension               carrefour.fr
 ## Fichiers
 
 - `manifest.json` — Manifest V3
-- `background.js` — Service worker, reçoit les messages de voixcourses.fr
+- `background.js` — Service worker, reçoit les messages de coraly.fr
 - `content.js` — Injecté sur carrefour.fr, affiche la bannière et remplit le panier
-- `voixcourses-marker.js` — Injecté sur voixcourses.fr, marque la présence de l'extension
+- `coraly-marker.js` — Injecté sur coraly.fr, marque la présence de l'extension
 - `popup.html` + `popup.js` — UI du clic sur l'icône
 - `icons/` — Icônes 16/48/128px
 
@@ -45,8 +45,8 @@ voixcourses.fr          extension               carrefour.fr
 3. Cliquer "Charger l'extension non empaquetée"
 4. Sélectionner le dossier `extension/` de ce projet
 
-L'icône VoixCourses apparaît dans la barre d'outils. Visiter `localhost:3000`
-ou `voixcourses.fr` — le marqueur est injecté automatiquement.
+L'icône Coraly apparaît dans la barre d'outils. Visiter `localhost:3000`
+ou `coraly.fr` — le marqueur est injecté automatiquement.
 
 ### Firefox
 
@@ -61,7 +61,7 @@ Note : Firefox décharge les extensions temporaires au redémarrage.
 - `storage` — stocker la liste en attente entre l'envoi et le clic sur Carrefour
 - `tabs` — ouvrir carrefour.fr dans un nouvel onglet après réception de la liste
 - `host_permissions: carrefour.fr` — injecter le content script qui affiche la bannière et fait les appels API
-- `externally_connectable: voixcourses.fr + localhost` — accepter les messages depuis notre app web uniquement
+- `externally_connectable: coraly.fr + localhost` — accepter les messages depuis notre app web uniquement
 
 Aucun accès à l'historique, aux autres sites, aux cookies non-Carrefour, etc.
 
@@ -70,7 +70,7 @@ Aucun accès à l'historique, aux autres sites, aux cookies non-Carrefour, etc.
 ### Chrome Web Store
 - Frais d'inscription développeur : 5$ une fois
 - URL : https://chrome.google.com/webstore/devconsole
-- Packager : `cd extension && zip -r ../voixcourses-extension.zip .`
+- Packager : `cd extension && zip -r ../coraly-extension.zip .`
 - Délai review initial : 1-7 jours
 
 ### Firefox Add-ons
@@ -85,10 +85,10 @@ Aucun accès à l'historique, aux autres sites, aux cookies non-Carrefour, etc.
 ## Tests manuels
 
 1. Installer l'extension en mode dev
-2. Aller sur localhost:3000 — vérifier `data-voixcourses-extension` sur `<html>`
+2. Aller sur localhost:3000 — vérifier `data-coraly-extension` sur `<html>`
 3. Faire une commande complète jusqu'à l'étape "Valider ma liste"
 4. Cliquer "Envoyer à Carrefour"
-5. Un nouvel onglet carrefour.fr s'ouvre avec une bannière VoixCourses
+5. Un nouvel onglet carrefour.fr s'ouvre avec une bannière Coraly
 6. Cliquer "Remplir mon panier" dans la bannière
 7. Le panier se remplit, redirection vers /mon-panier
 

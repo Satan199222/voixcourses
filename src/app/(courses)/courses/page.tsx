@@ -172,7 +172,7 @@ function Home() {
 
   useEffect(() => {
     if (voiceForced && typeof window !== "undefined") {
-      localStorage.setItem("voixcourses-voice-enabled", "true");
+      localStorage.setItem("coraly-voice-enabled", "true");
     }
   }, [voiceForced]);
 
@@ -302,7 +302,7 @@ function Home() {
   }[step];
 
   // Document.title refléte l'étape — utile quand l'utilisateur a plusieurs
-  // onglets ouverts et cherche à retrouver VoixCourses dans sa barre d'onglets.
+  // onglets ouverts et cherche à retrouver Coraly dans sa barre d'onglets.
   const shortStep = {
     store: "Magasin",
     input: "Liste",
@@ -310,7 +310,7 @@ function Home() {
     results: "Produits",
     cart: "Panier",
   }[step];
-  useDocumentTitle(`VoixCourses — ${shortStep}`);
+  useDocumentTitle(`Coraly — ${shortStep}`);
 
   // ── Store selected ─────────────────────────────────────────────────────────
   async function handleStoreSelected(store: CarrefourStore, bsid: string) {
@@ -783,7 +783,7 @@ function Home() {
         className="max-w-2xl mx-auto px-4 py-8 space-y-8"
         inert={helpOpen}
       >
-        <h1 className="sr-only">Vos courses — VoixCourses</h1>
+        <h1 className="sr-only">Vos courses — Coraly</h1>
 
         {/* Indicateur d'étape visuel — complément aux annonces ARIA pour les
             utilisateurs voyants qui veulent situer leur progression. */}

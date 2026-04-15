@@ -26,7 +26,7 @@ describe("usePreferences", () => {
       result.current.update({ diet: ["sans-gluten"] });
     });
     expect(result.current.prefs.diet).toEqual(["sans-gluten"]);
-    const raw = localStorage.getItem("voixcourses-preferences");
+    const raw = localStorage.getItem("coraly-preferences");
     expect(raw).toContain("sans-gluten");
   });
 

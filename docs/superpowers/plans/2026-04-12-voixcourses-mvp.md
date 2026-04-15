@@ -1,4 +1,4 @@
-# VoixCourses MVP — Plan d'Implémentation
+# Coraly MVP — Plan d'Implémentation
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -174,7 +174,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VoixCourses — Assistant Courses Accessible",
+  title: "Coraly — Assistant Courses Accessible",
   description:
     "Faites vos courses en ligne par la voix. Dictez votre liste, l'IA s'occupe du reste.",
 };
@@ -209,7 +209,7 @@ export default function RootLayout({
 export default function Home() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-4">VoixCourses</h1>
+      <h1 className="text-3xl font-bold mb-4">Coraly</h1>
       <p className="text-[var(--text-muted)]">
         Dictez ou tapez votre liste de courses. L'IA trouve les produits et
         remplit votre panier Carrefour.
@@ -225,7 +225,7 @@ export default function Home() {
 npm run dev
 ```
 
-Vérifier dans le navigateur : `http://localhost:3000` — la page s'affiche avec le titre "VoixCourses".
+Vérifier dans le navigateur : `http://localhost:3000` — la page s'affiche avec le titre "Coraly".
 
 - [ ] **Step 8: Commit**
 
@@ -1774,7 +1774,7 @@ export default function Home() {
       <LiveRegion message={announcement} />
 
       <header>
-        <h1 className="text-3xl font-bold">VoixCourses</h1>
+        <h1 className="text-3xl font-bold">Coraly</h1>
         <p className="text-[var(--text-muted)] mt-1">
           Dictez ou tapez votre liste. L'IA remplit votre panier Carrefour.
         </p>
@@ -1890,7 +1890,7 @@ npm run build
 - [ ] **Step 5: Commit final**
 
 ```bash
-git add -A && git commit -m "feat: VoixCourses MVP complete - voice grocery list to Carrefour cart"
+git add -A && git commit -m "feat: Coraly MVP complete - voice grocery list to Carrefour cart"
 ```
 
 - [ ] **Step 6: Déployer sur Vercel**
@@ -1908,7 +1908,7 @@ Configurer l'auth AI Gateway : `vercel env pull` pour OIDC automatique, ou ajout
 ### Limites du MVP (volontaires)
 
 - **Pas de DB** : stateless, pas de préférences ni d'historique
-- **Pas d'auth utilisateur** : pas de comptes VoixCourses
+- **Pas d'auth utilisateur** : pas de comptes Coraly
 - **Code postal en dur** (57360) : la sélection de magasin sera ajoutée en phase 2
 - **Pas de gestion des quantités** dans le panier (toujours 1)
 - **Pas de i18n** : français uniquement

@@ -167,7 +167,7 @@ export async function getCart(storeRef?: string): Promise<Cart> {
  * Ajouter un produit au panier.
  * Ref: PATCH /api/cart — docs/CARREFOUR-API.md § "Panier — Ajout"
  *
- * Note : dans le flow VoixCourses, c'est l'extension Chrome qui appelle
+ * Note : dans le flow Coraly, c'est l'extension Chrome qui appelle
  * cet endpoint directement sur carrefour.fr (avec les cookies utilisateur).
  * Cette fonction n'est utilisée qu'en dev/test.
  */

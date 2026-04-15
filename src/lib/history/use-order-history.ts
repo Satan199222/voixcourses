@@ -2,8 +2,8 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 
-const KEY = "voixcourses-history";
-const CHANGE_EVENT = "voixcourses-history-changed";
+const KEY = "coraly-history";
+const CHANGE_EVENT = "coraly-history-changed";
 const MAX_ENTRIES = 10;
 
 export interface OrderEntry {

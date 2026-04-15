@@ -1,7 +1,7 @@
 const FAQS = [
   {
     q: "Faut-il installer quelque chose ?",
-    a: "Non. VoixCourses fonctionne dans votre navigateur. Pour certaines enseignes, une extension Chrome optionnelle améliore la finalisation du panier — son installation se fait en un clic, et elle est elle-même accessible au clavier.",
+    a: "Non. Coraly fonctionne dans votre navigateur. Pour certaines enseignes, une extension Chrome optionnelle améliore la finalisation du panier — son installation se fait en un clic, et elle est elle-même accessible au clavier.",
   },
   {
     q: "Koraly comprend-elle mon accent ?",
@@ -35,7 +35,7 @@ export function FaqAccordion() {
         >
           Les questions qu&apos;on nous pose le plus souvent. Si la vôtre n&apos;y est pas,{" "}
           <a
-            href="mailto:contact@voixcourses.fr"
+            href="mailto:hello@coraly.fr"
             className="underline"
             style={{ color: "var(--accent)" }}
           >

@@ -13,7 +13,7 @@ import {
 } from "@/lib/extension/browser-detection";
 
 /**
- * Page dédiée à l'installation de l'extension VoixCourses.
+ * Page dédiée à l'installation de l'extension Coraly.
  *
  * - Détecte le navigateur et affiche la procédure appropriée
  * - Cite le Store quand publié, ou mode dev (charger dépaquetée) en fallback
@@ -39,7 +39,7 @@ export default function InstallerPage() {
           <p className="text-[var(--text-muted)] mt-1 text-base">
             L&apos;extension permet de remplir votre panier Carrefour en un clic,
             directement dans votre session. Aucun identifiant ne transite par
-            VoixCourses.
+            Coraly.
           </p>
         </header>
 
@@ -159,7 +159,7 @@ function ExtensionStatus({
           <p className="text-sm mt-1">
             Vous pouvez retourner sur{" "}
             <Link href="/" className="underline text-[var(--accent)]">
-              VoixCourses
+              Coraly
             </Link>{" "}
             et envoyer votre liste en 1 clic.
           </p>
@@ -221,7 +221,7 @@ function UnsupportedBrowserNotice({ browser }: { browser: BrowserInfo }) {
         href="/"
         className="inline-block px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold hover:bg-[var(--accent-hover)]"
       >
-        Utiliser VoixCourses sans extension (liste manuelle)
+        Utiliser Coraly sans extension (liste manuelle)
       </Link>
     </section>
   );
@@ -306,7 +306,7 @@ function DevInstallProcedure({ browser }: { browser: BrowserInfo }) {
         <ol className="space-y-3 text-base list-decimal list-inside">
           <li>
             <a
-              href="https://github.com/Satan199222/voixcourses/releases/latest"
+              href="https://github.com/Satan199222/coraly/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-[var(--accent)]"
@@ -336,7 +336,7 @@ function DevInstallProcedure({ browser }: { browser: BrowserInfo }) {
         <ol className="space-y-3 text-base list-decimal list-inside">
           <li>
             <a
-              href="https://github.com/Satan199222/voixcourses/releases/latest"
+              href="https://github.com/Satan199222/coraly/releases/latest"
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-[var(--accent)]"
@@ -387,12 +387,12 @@ function PrivacySection() {
       <ul className="text-sm text-[var(--text-muted)] space-y-1 list-disc list-inside">
         <li>
           L&apos;extension n&apos;accède qu&apos;à <code>carrefour.fr</code> et à
-          l&apos;app VoixCourses (<code>voixcourses.vercel.app</code>). Aucun
+          l&apos;app Coraly (<code>coraly.vercel.app</code>). Aucun
           autre site.
         </li>
         <li>
           Vos identifiants Carrefour ne transitent <strong>jamais</strong> par
-          VoixCourses — l&apos;extension agit dans votre propre session navigateur.
+          Coraly — l&apos;extension agit dans votre propre session navigateur.
         </li>
         <li>
           Aucune télémétrie, aucun suivi, aucune donnée envoyée à un serveur

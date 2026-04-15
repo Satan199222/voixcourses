@@ -5,11 +5,11 @@ interface LogoProps {
 }
 
 /**
- * Logo VoixCourses — onde vocale stylisée qui évolue en caddie.
+ * Logo Coraly — onde vocale stylisée qui évolue en caddie.
  * SVG inline pour contrôler la couleur via currentColor et éviter une
  * dépendance à un asset externe (zéro requête réseau).
  *
- * aria-hidden par défaut : le H1 "VoixCourses" à côté porte déjà le nom.
+ * aria-hidden par défaut : le H1 "Coraly" à côté porte déjà le nom.
  */
 export function Logo({ className = "", title }: LogoProps) {
   const ariaProps = title

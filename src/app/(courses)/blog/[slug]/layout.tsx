@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getPostBySlug } from "@/lib/sanity/client";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://voixcourses.fr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://coraly.fr";
 
 export async function generateMetadata({
   params,
@@ -21,7 +21,7 @@ export async function generateMetadata({
     return {
       title: "Article",
       description:
-        "Article de blog VoixCourses sur l'accessibilité numérique et les courses vocales.",
+        "Article de blog Coraly sur l'accessibilité numérique et les courses vocales.",
       alternates: { canonical: `/blog/${slug}` },
     };
   }

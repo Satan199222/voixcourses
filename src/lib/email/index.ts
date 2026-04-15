@@ -18,11 +18,11 @@ export interface RenderedEmail {
 
 const SUBJECTS: Record<EmailTemplateId, (vars: EmailVariables) => string> = {
   "bienvenue-j0": () =>
-    "Bienvenue sur VoixCourses — faites vos courses sans les mains",
+    "Bienvenue sur Coraly — faites vos courses sans les mains",
   "astuces-j2": (vars) =>
     `${vars.PRENOM}, 5 phrases que Koraly comprend parfaitement`,
   "referral-j7": () =>
-    "Quelqu'un de votre entourage pourrait bénéficier de VoixCourses",
+    "Quelqu'un de votre entourage pourrait bénéficier de Coraly",
 };
 
 function loadTemplate(templateId: EmailTemplateId): string {

@@ -13,7 +13,7 @@ export default function NotFound() {
       <h1 className="text-3xl font-bold">Page introuvable</h1>
       <p className="text-[var(--text-muted)]">
         Cette page n&apos;existe pas ou a été déplacée. Vous pouvez revenir à
-        VoixCourses ou consulter la procédure d&apos;installation de
+        Coraly ou consulter la procédure d&apos;installation de
         l&apos;extension.
       </p>
       <div className="flex gap-3 flex-wrap justify-center">
@@ -21,7 +21,7 @@ export default function NotFound() {
           href="/"
           className="inline-block px-6 py-3 rounded-lg bg-[var(--accent)] text-[var(--bg)] font-bold hover:bg-[var(--accent-hover)] transition-colors"
         >
-          Retour à VoixCourses
+          Retour à Coraly
         </Link>
         <Link
           href="/installer"

@@ -8,7 +8,7 @@ import { Footer } from "@/components/footer";
 import { HelpDialog } from "@/components/help-dialog";
 
 /**
- * Page /fonctionnalites — Landing page VoixCourses.
+ * Page /fonctionnalites — Landing page Coraly.
  *
  * Contenu approuvé par le Board (GROA-202 / approval 6a1942bb).
  * WCAG AAA : landmarks, heading order, contraste, aria-labels.
@@ -29,7 +29,7 @@ export default function FonctionnalitesPage() {
           style={{ borderColor: "var(--border)" }}
         >
           <div className="max-w-[860px] mx-auto px-10">
-            <span className="vc-eyebrow">Fonctionnalités · VoixCourses</span>
+            <span className="vc-eyebrow">Fonctionnalités · Coraly</span>
             <h1
               id="fonctionnalites-title"
               className="vc-h1 mt-4 mb-6"
@@ -41,7 +41,7 @@ export default function FonctionnalitesPage() {
               className="text-[19px] leading-[1.75] max-w-[640px] mb-10"
               style={{ color: "var(--text-soft)" }}
             >
-              VoixCourses rend la formation en ligne véritablement accessible.
+              Coraly rend la formation en ligne véritablement accessible.
               Commandez tout par la voix, lisez sans effort, avancez à votre
               propre tempo.
             </p>
@@ -92,7 +92,7 @@ export default function FonctionnalitesPage() {
                     style={{ color: "var(--text-soft)" }}
                   >
                     Dites «&nbsp;cours suivant&nbsp;», «&nbsp;répéter&nbsp;»,
-                    «&nbsp;mettre en pause&nbsp;» — VoixCourses vous obéit. Plus
+                    «&nbsp;mettre en pause&nbsp;» — Coraly vous obéit. Plus
                     besoin de chercher le bon bouton. Vous restez concentré sur
                     ce qui compte&nbsp;: apprendre.
                   </p>
@@ -125,7 +125,7 @@ export default function FonctionnalitesPage() {
                     className="text-[17px] leading-[1.8] max-w-[600px]"
                     style={{ color: "var(--text-soft)" }}
                   >
-                    {`Contrastes élevés, police Luciole spécialement développée pour les personnes malvoyantes, compatibilité totale avec les lecteurs d'écran — VoixCourses respecte les standards d'accessibilité les plus exigeants. Parce que l'accès au savoir ne devrait pas avoir de conditions.`}
+                    {`Contrastes élevés, police Luciole spécialement développée pour les personnes malvoyantes, compatibilité totale avec les lecteurs d'écran — Coraly respecte les standards d'accessibilité les plus exigeants. Parce que l'accès au savoir ne devrait pas avoir de conditions.`}
                   </p>
                 </div>
               </article>
@@ -156,7 +156,7 @@ export default function FonctionnalitesPage() {
                     className="text-[17px] leading-[1.8] max-w-[600px]"
                     style={{ color: "var(--text-soft)" }}
                   >
-                    {`Pas de téléchargement, pas d'installation compliquée. Ajoutez l'extension VoixCourses à votre navigateur et commencez à apprendre en quelques secondes, depuis n'importe quelle page.`}
+                    {`Pas de téléchargement, pas d'installation compliquée. Ajoutez l'extension Coraly à votre navigateur et commencez à apprendre en quelques secondes, depuis n'importe quelle page.`}
                   </p>
                 </div>
               </article>
