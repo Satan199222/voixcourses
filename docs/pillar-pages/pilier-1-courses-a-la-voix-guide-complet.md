@@ -330,6 +330,18 @@ La commande vocale est utilisée quotidiennement par des dizaines de millions de
 
 ---
 
+## Le contexte légal : pourquoi la commande vocale est devenue nécessaire
+
+La commande vocale pour les courses n'est pas seulement une commodité — c'est une réponse à un échec structurel de l'accessibilité numérique en France.
+
+Selon le rapport 2023 de la DINUM, **seulement 3,4 % des sites web français sont pleinement conformes au RGAA** (Référentiel Général d'Amélioration de l'Accessibilité). Dans l'e-commerce alimentaire, ce taux est encore plus bas : les tunnels de commande des grandes enseignes restent largement inaccessibles aux personnes utilisant des lecteurs d'écran ou une navigation au clavier.
+
+Depuis le **28 juin 2025**, l'**European Accessibility Act** (directive EU 2019/882) impose une conformité WCAG 2.1 niveau AA à tous les services d'e-commerce en France. Les enseignes non conformes s'exposent désormais à des sanctions de l'ARCOM. Mais la mise en conformité prend du temps — VoixCourses offre une solution immédiate.
+
+→ Pour le détail de l'état de conformité enseigne par enseigne : [Accessibilité numérique et grande distribution en France](/blog/accessibilite-numerique-courses-alimentaires-france)
+
+---
+
 ## Courses à la voix vs autres méthodes : comparatif
 
 | Méthode | Temps moyen | Mains libres | Accessible sans écran | Accessible aux seniors |

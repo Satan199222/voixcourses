@@ -290,6 +290,16 @@ VoixCourses mémorise automatiquement les produits commandés. Votre proche peut
 
 ---
 
+## Ce que la loi garantit aux seniors depuis juin 2025
+
+L'**European Accessibility Act** (directive EU 2019/882), entrée en vigueur le **28 juin 2025**, impose aux sites et applications d'e-commerce — y compris les courses alimentaires en ligne — d'être accessibles conformément aux normes WCAG 2.1 niveau AA.
+
+Concrètement : un senior rencontrant des difficultés d'utilisation sur un site de courses en ligne dispose désormais de recours légaux (signalement à l'ARCOM, actions associatives). Mais en pratique, **seulement 3,4 % des sites français sont pleinement conformes au RGAA** (rapport DINUM 2023). La loi est là, la mise en conformité réelle prend encore du temps.
+
+VoixCourses offre une alternative immédiatement accessible, sans attendre que chaque enseigne ait mis à niveau ses tunnels de commande.
+
+---
+
 ## Les aides financières disponibles
 
 ### L'APA (Allocation Personnalisée d'Autonomie)
