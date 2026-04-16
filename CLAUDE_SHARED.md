@@ -93,6 +93,8 @@ Si un besoin ne peut pas être couvert par le standard, le custom est OK **à co
 - **Notifications app** : Amazon SES + Knock
 - **Notifications alertes** : Email + Telegram (bot perso)
 - **Bot / Messaging** : Telegram Bot API + Mini App
+- **IA** : Vercel AI Gateway (`AI_GATEWAY_API_KEY`) — **source unique pour tous les projets**
+- **AI SDK** : Vercel AI SDK v4+ (`ai` package, `gateway("provider/model")`)
 - **Storage fichiers** : Vercel Blob / Uploadthing
 - **Tests E2E** : Playwright
 - **Tests unitaires** : Vitest
@@ -1511,6 +1513,97 @@ headers: async () => [
   ]
 }
 ```
+
+---
+
+## IA — Vercel AI Gateway (OBLIGATOIRE)
+
+> **Règle groupe** : Tous les appels IA des 8 projets passent **uniquement** par le Vercel AI Gateway. Aucun appel direct aux providers (OpenAI, Anthropic, Google, Perplexity, etc.) n'est autorisé.
+
+### Pourquoi
+
+- Observabilité centralisée (coûts, latence, erreurs par projet)
+- Fallback / model routing géré par le gateway
+- Une seule clé API (`AI_GATEWAY_API_KEY`) par projet — pas de rotation multi-provider
+- Zero data retention option sur les providers sensibles
+
+### Pattern standard — `@ai-sdk/gateway` (recommandé)
+
+Utiliser le module `gateway` de l'AI SDK (`ai@^4`). C'est la méthode la plus simple et la plus portable :
+
+```typescript
+// ✅ CORRECT — importe gateway depuis "ai"
+import { generateText, streamText } from "ai";
+import { gateway } from "ai";
+
+const result = await generateText({
+  model: gateway("anthropic/claude-sonnet-4-6"),
+  prompt: "...",
+});
+
+// Autres providers via le même gateway
+const stream = streamText({
+  model: gateway("openai/gpt-4o-mini"),
+  messages: [...],
+});
+```
+
+Les model strings suivent le format `"provider/model-id"` — voir la liste des modèles disponibles dans le dashboard Vercel AI Gateway.
+
+### Variables d'environnement
+
+| Variable            | Description                                  | Obligatoire |
+| ------------------- | -------------------------------------------- | ----------- |
+| `AI_GATEWAY_API_KEY` | Clé API Vercel AI Gateway (unique par projet) | ✅ Oui      |
+
+Ajouter dans Doppler (envs `dev`, `staging`, `prd`) et référencer via t3-env :
+
+```typescript
+// env.ts
+AI_GATEWAY_API_KEY: z.string().min(1),
+```
+
+Le SDK `ai` lit la variable `AI_GATEWAY_API_KEY` automatiquement quand `gateway()` est utilisé.
+
+### Règles strictes
+
+- **❌ INTERDIT** : `import Anthropic from "@anthropic-ai/sdk"` avec `apiKey: process.env.ANTHROPIC_API_KEY`
+- **❌ INTERDIT** : `import { google } from "@ai-sdk/google"` directement (sans gateway)
+- **❌ INTERDIT** : `import { anthropic } from "@ai-sdk/anthropic"` directement (sans gateway)
+- **❌ INTERDIT** : tout `baseURL` custom pointant ailleurs que Vercel AI Gateway
+- **✅ AUTORISÉ** : `import { openai } from "@ai-sdk/openai"` **uniquement** si `baseURL` pointe sur `https://ai-gateway.vercel.sh/v1` et `apiKey = AI_GATEWAY_API_KEY`
+- **✅ AUTORISÉ** : `gateway("provider/model")` de `"ai"` — méthode recommandée
+
+### Packages à ne pas installer dans les nouveaux projets
+
+Les packages provider-spécifiques sont **déconseillés** dans les nouveaux projets — utiliser uniquement `gateway()` :
+
+```
+// Préférer gateway() plutôt que ces packages direct :
+@ai-sdk/anthropic  ← NON pour les appels directs
+@ai-sdk/google     ← NON pour les appels directs
+@anthropic-ai/sdk  ← NON (sauf usage très spécifique non-AI-SDK)
+openai             ← NON (sauf usage très spécifique non-AI-SDK)
+```
+
+`@ai-sdk/gateway` est inclus dans le package `ai` depuis la v4 — pas besoin d'installation séparée.
+
+### Exception — Projets avec `@megahote/ai` ou package IA interne
+
+Pour **megahote** uniquement : utiliser le package `@megahote/ai` qui wrape le gateway. Ne pas appeler le gateway directement dans les modules applicatifs :
+
+```typescript
+// megahote uniquement
+import { getOpenAIModel, generateText, isAIGatewayConfigured } from "@megahote/ai";
+```
+
+### Migration des appels non-conformes
+
+Si un projet appelle un provider directement :
+1. Installer/vérifier que `ai` >= 4 est en dépendance
+2. Remplacer l'import provider par `gateway("provider/model-id")` 
+3. Supprimer la variable `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / etc. de Doppler (garder uniquement `AI_GATEWAY_API_KEY`)
+4. Tester avec `AI_GATEWAY_API_KEY` valide en dev
 
 ---
 
