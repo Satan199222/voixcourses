@@ -7,7 +7,7 @@
  *  - Write client (token requis) : utilise SANITY_PROJECT_ID + SANITY_API_TOKEN,
  *    disponible côté serveur uniquement (api/cron/generate-blog).
  *
- * Projet Sanity : voixcourses-blog (ID: vukx2jui) — créé dans GROA-122.
+ * Projet Sanity : coraly-blog (ID: vukx2jui) — créé dans GROA-122, renommé dans GROA-369.
  * Type de document : "blogPost" (standard Groupe J, CLAUDE_SHARED.md).
  */
 
