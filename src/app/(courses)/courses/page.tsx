@@ -827,7 +827,7 @@ function Home() {
         <h2
           ref={stepHeadingRef}
           tabIndex={-1}
-          className="sr-only focus:not-sr-only focus:text-xl focus:font-bold focus:ring-3 focus:ring-[var(--focus-ring)]"
+          className="sr-only focus:not-sr-only focus:text-xl focus:font-bold focus:ring-4 focus:ring-[var(--focus-ring)] rounded"
           aria-live="polite"
         >
           {stepTitle}
