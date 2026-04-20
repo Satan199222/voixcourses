@@ -22,13 +22,10 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
-import { LiveRegion } from "@/lib/shared/components/live-region";
+import { KoralyPageShell } from "@/lib/shared/components/koraly-page-shell";
+import { KoralyMsgBubble } from "@/lib/shared/components/koraly-msg-bubble";
 import { KoralyOrb } from "@/lib/shared/components/koraly-orb";
 import type { KoralyOrbStatus } from "@/lib/shared/components/koraly-orb";
-import { SiteHeader } from "@/components/site-header";
-import { Footer } from "@/components/footer";
-import { HelpDialog } from "@/components/help-dialog";
 import { useSpeech } from "@/lib/shared/speech/use-speech";
 import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-preferences";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
@@ -168,40 +165,6 @@ function ProductCard({ product }: ProductCardProps) {
 // ---------------------------------------------------------------------------
 // Composant bulle de message
 // ---------------------------------------------------------------------------
-
-interface MsgBubbleProps {
-  msg: ChatMsg;
-}
-
-function MsgBubble({ msg }: MsgBubbleProps) {
-  const isKoraly = msg.role === "koraly";
-  return (
-    <div className={`flex flex-col ${isKoraly ? "items-start" : "items-end"}`}>
-      <div
-        className="max-w-prose rounded-2xl px-4 py-3 text-base leading-relaxed"
-        style={{
-          background: isKoraly ? "var(--bg-card)" : "var(--accent)",
-          color: isKoraly ? "var(--text)" : "#fff",
-          border: isKoraly ? "1px solid var(--border)" : "none",
-          borderRadius: isKoraly ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
-        }}
-      >
-        {msg.loading ? (
-          <span aria-label="Koraly cherche…" style={{ opacity: 0.6 }}>…</span>
-        ) : (
-          msg.text
-        )}
-      </div>
-      {msg.product && <ProductCard product={msg.product} />}
-      {msg.categorySlugs && msg.categorySlugs.length > 0 && !msg.product && (
-        <div className="mt-2 text-xs" style={{ color: "var(--text-soft)" }}>
-          <p>Produits trouvés : {msg.categorySlugs.slice(0, 5).join(", ")}</p>
-          <p className="mt-1">Précisez votre recherche pour obtenir les détails d&apos;un produit.</p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Page principale
@@ -412,11 +375,13 @@ export default function SantePage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <>
-      <AccessibilityBar service="sante" />
-      <LiveRegion message={announcement} />
-      <SiteHeader />
-      <main id="main" tabIndex={-1}>
+    <KoralyPageShell
+      service="sante"
+      announcement={announcement}
+      helpOpen={helpOpen}
+      onHelpClose={() => setHelpOpen(false)}
+      mainStyle={{ minHeight: "100dvh" }}
+    >
         <h1 className="sr-only">VoixSanté — Médicaments sans ordonnance par la voix</h1>
 
         <div
@@ -488,7 +453,21 @@ export default function SantePage() {
             style={{ maxHeight: "55vh" }}
           >
             {messages.map((msg) => (
-              <MsgBubble key={msg.id} msg={msg} />
+              <KoralyMsgBubble
+                key={msg.id}
+                role={msg.role}
+                text={msg.text}
+                loading={msg.loading}
+                loadingLabel="Koraly cherche…"
+              >
+                {msg.product && <ProductCard product={msg.product} />}
+                {msg.categorySlugs && msg.categorySlugs.length > 0 && !msg.product && (
+                  <div className="mt-2 text-xs" style={{ color: "var(--text-soft)" }}>
+                    <p>Produits trouvés : {msg.categorySlugs.slice(0, 5).join(", ")}</p>
+                    <p className="mt-1">Précisez votre recherche pour obtenir les détails d&apos;un produit.</p>
+                  </div>
+                )}
+              </KoralyMsgBubble>
             ))}
             <div ref={chatEndRef} aria-hidden="true" />
           </section>
@@ -586,9 +565,6 @@ export default function SantePage() {
             <kbd>?</kbd> aide
           </p>
         </div>
-      </main>
-      <Footer />
-      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
-    </>
+    </KoralyPageShell>
   );
 }

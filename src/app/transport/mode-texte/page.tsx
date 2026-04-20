@@ -22,13 +22,11 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { AccessibilityBar } from "@/lib/shared/components/accessibility-bar";
-import { LiveRegion } from "@/lib/shared/components/live-region";
+import { KoralyPageShell } from "@/lib/shared/components/koraly-page-shell";
+import { KoralyMsgBubble } from "@/lib/shared/components/koraly-msg-bubble";
+import { KoralyChatInput } from "@/lib/shared/components/koraly-chat-input";
 import { KoralyOrb } from "@/lib/shared/components/koraly-orb";
 import type { KoralyOrbStatus } from "@/lib/shared/components/koraly-orb";
-import { SiteHeader } from "@/components/site-header";
-import { Footer } from "@/components/footer";
-import { HelpDialog } from "@/components/help-dialog";
 import { useSpeech } from "@/lib/shared/speech/use-speech";
 import { usePreferences, SPEECH_RATE_VALUE } from "@/lib/preferences/use-preferences";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
@@ -367,39 +365,6 @@ async function handleIntent(intent: KoralyIntent): Promise<string> {
 // Composant message
 // ---------------------------------------------------------------------------
 
-interface MsgBubbleProps {
-  msg: ChatMsg;
-}
-
-function MsgBubble({ msg }: MsgBubbleProps) {
-  const isKoraly = msg.role === "koraly";
-  return (
-    <div
-      className={`flex ${isKoraly ? "justify-start" : "justify-end"}`}
-    >
-      <div
-        className="max-w-prose rounded-2xl px-4 py-3 text-base leading-relaxed"
-        style={{
-          background: isKoraly ? "var(--bg-card)" : "var(--accent)",
-          color: isKoraly ? "var(--text)" : "#fff",
-          border: isKoraly ? "1px solid var(--border)" : "none",
-          borderRadius: isKoraly
-            ? "4px 18px 18px 18px"
-            : "18px 4px 18px 18px",
-        }}
-      >
-        {msg.loading ? (
-          <span aria-label="Koraly réfléchit…" style={{ opacity: 0.6 }}>
-            …
-          </span>
-        ) : (
-          msg.text
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Suggestions rapides
 // ---------------------------------------------------------------------------
@@ -534,11 +499,6 @@ export default function TransportPage() {
     [busy, voiceEnabled, speak, cancelSpeech]
   );
 
-  function handleFormSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    submitQuery(inputText);
-  }
-
   function toggleMic() {
     if (isListening) {
       stopListening();
@@ -593,23 +553,15 @@ export default function TransportPage() {
   }, [helpOpen, isSupported, isListening, cancelSpeech, stopListening, router, toggleMic]);
 
   return (
-    <>
-      <AccessibilityBar
-        service="transport"
-        onVoiceToggle={setVoiceEnabled}
-        onHelpRequest={() => setHelpOpen(true)}
-      />
-
-      <LiveRegion message={announcement} />
-
-      <SiteHeader />
-
-      <main
-        id="main"
-        tabIndex={-1}
-        className="flex flex-col min-h-screen px-4 py-8 max-w-2xl mx-auto"
-        style={{ outline: "none" }}
-      >
+    <KoralyPageShell
+      service="transport"
+      announcement={announcement}
+      onVoiceToggle={setVoiceEnabled}
+      helpOpen={helpOpen}
+      onHelpClose={() => setHelpOpen(false)}
+      onHelpOpen={() => setHelpOpen(true)}
+      mainClassName="flex flex-col min-h-screen px-4 py-8 max-w-2xl mx-auto"
+    >
         <h1 className="vc-h1 mb-1">VoixTransport</h1>
         <p
           className="mb-6 text-sm"
@@ -676,97 +628,25 @@ export default function TransportPage() {
           }}
         >
           {messages.map((msg) => (
-            <MsgBubble key={msg.id} msg={msg} />
+            <KoralyMsgBubble key={msg.id} role={msg.role} text={msg.text} loading={msg.loading} />
           ))}
           <div ref={chatEndRef} aria-hidden="true" />
         </section>
 
         {/* Zone de saisie */}
-        <form
-          onSubmit={handleFormSubmit}
-          aria-label="Poser une question à Koraly"
-          className="flex items-center gap-2"
-        >
-          <label htmlFor="koraly-input" className="sr-only">
-            Votre question (transports en commun)
-          </label>
-          <input
-            ref={inputRef}
-            id="koraly-input"
-            type="text"
-            autoComplete="off"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            disabled={busy}
-            placeholder={
-              isListening
-                ? "Parlez maintenant…"
-                : "Posez votre question…"
-            }
-            aria-label="Question à Koraly — ex: Prochain RER A à Nation"
-            className="flex-1 rounded-xl px-4 py-3 text-base border"
-            style={{
-              background: "var(--bg-surface)",
-              color: "var(--text)",
-              borderColor: isListening ? "var(--brass)" : "var(--border-hi)",
-              outline: "none",
-              boxShadow: isListening ? "0 0 0 3px rgba(181,136,66,0.3)" : undefined,
-            }}
-            onFocus={(e) =>
-              (e.currentTarget.style.boxShadow = isListening
-                ? "0 0 0 3px rgba(181,136,66,0.3)"
-                : "0 0 0 3px var(--focus-ring)")
-            }
-            onBlur={(e) => (e.currentTarget.style.boxShadow = "")}
-          />
-
-          {/* Bouton micro */}
-          {isSupported && (
-            <button
-              type="button"
-              onClick={toggleMic}
-              disabled={busy}
-              aria-label={
-                isListening
-                  ? "Arrêter la reconnaissance vocale (raccourci V)"
-                  : "Activer la reconnaissance vocale (raccourci V)"
-              }
-              aria-pressed={isListening}
-              className="rounded-xl px-3 py-3 shrink-0"
-              style={{
-                background: isListening ? "var(--brass)" : "var(--bg-surface)",
-                color: isListening ? "#fff" : "var(--text-soft)",
-                border: "1px solid var(--border-hi)",
-                cursor: busy ? "not-allowed" : "pointer",
-                fontSize: "1.25rem",
-                lineHeight: 1,
-                opacity: busy ? 0.5 : 1,
-              }}
-            >
-              🎤
-            </button>
-          )}
-
-          {/* Bouton envoi */}
-          <button
-            type="submit"
-            disabled={!inputText.trim() || busy}
-            aria-label="Envoyer la question"
-            className="rounded-xl px-4 py-3 font-semibold text-sm shrink-0"
-            style={{
-              background:
-                inputText.trim() && !busy ? "var(--accent)" : "var(--bg-surface)",
-              color: inputText.trim() && !busy ? "#fff" : "var(--text-muted)",
-              border:
-                inputText.trim() && !busy
-                  ? "none"
-                  : "1px solid var(--border-hi)",
-              cursor: inputText.trim() && !busy ? "pointer" : "not-allowed",
-            }}
-          >
-            Envoyer
-          </button>
-        </form>
+        <KoralyChatInput
+          inputId="koraly-input"
+          inputLabel="Question à Koraly — ex: Prochain RER A à Nation"
+          formLabel="Poser une question à Koraly"
+          placeholder="Posez votre question…"
+          value={inputText}
+          onChange={setInputText}
+          onSubmit={() => submitQuery(inputText)}
+          onMicToggle={toggleMic}
+          isListening={isListening}
+          isSupported={isSupported}
+          busy={busy}
+        />
 
         {/* Légende raccourcis */}
         <p
@@ -778,14 +658,6 @@ export default function TransportPage() {
           <kbd>V</kbd> = micro ·{" "}
           <kbd>Échap</kbd> = stop · Limite V1 : bus hors IdF non couverts
         </p>
-      </main>
-
-      <Footer />
-
-      <HelpDialog
-        open={helpOpen}
-        onClose={() => setHelpOpen(false)}
-      />
-    </>
+    </KoralyPageShell>
   );
 }
